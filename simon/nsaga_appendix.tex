@@ -1,0 +1,295 @@
+%
+
+\newpage
+
+
+\appendix
+
+\section{Appendix}
+\label{sec:appendix}
+
+\setcounter{lemma}{0}
+\setcounter{theorem}{0}
+\setcounter{corollary}{0}
+
+\begin{lemma}
+For the iterate sequence of any algorithm that evolves solutions according to Eq.~\eqref{eq:sgd-corrected}, the following holds for a single update step, in expectation over the choice of $i$, with \\$\triangle := \| w - w^*\|^2  - \E \| w^+ - w^*\|^2$, then: 
+\begin{align}
+\triangle \ge  &\quad \gamma \mu \| w- w^*\|^2  - 2 \gamma^2  \E \| \alpha_i - f_i'(w^*)\|^2  + \left( 2\gamma - 4 \gamma^2 L  \right) f^\delta(w) \,.
+\nonumber %
+\end{align}
+\vspace*{-6mm}
+\begin{proof} 
+Starting from Eq.~\eqref{eq:recurrence} we have
+\begin{align*}
+\triangle
+= &
+2 \gamma \langle f'(w), w-w^*\rangle - \gamma^2 \E \| g_i(w) \|^2 
+%
+\\ \stackrel{\eqref{eq:naive-strong-convexity}}{\ge} &  
+\gamma \mu \| w-w^*\|^2 + 2 \gamma f^\delta (w)  - \gamma^2 \E \| g_i(w) \|^2 \\
+%
+\stackrel{\eqref{eq:beta-split}}{\ge} &  
+\gamma \mu  \| w-w^*\|^2  +  2 \gamma f^\delta (w) 
+%
+- 2 \gamma^2 \E \| f'_i(w) - f'_i(w^*) \|^2 
+-2 \gamma^2  \E \| \bar \alpha_i - f_i'(w^* )\|^2 \\
+\stackrel{\eqref{eq:expected-smoothness},\eqref{eq:alpha-simplification}}{\ge} &  
+\gamma \mu \| w- w^*\|^2  + 
+2 \gamma ( 1 - 2\gamma L  )  f^\delta(w)
+  - 2 \gamma^2 \E \| \alpha_i - f_i'(w^*)\|^2  \nonumber
+\,.\end{align*}
+\end{proof}
+\end{lemma}
+
+\begin{lemma} 
+For a uniform $q$-memorization algorithm, it holds that 
+\begin{align*}
+\E \bar H^+ = \left( \frac{n-q}{n} \right) \bar H + \frac{2Lq}{n} \, f^\delta(w).
+\end{align*}
+\begin{proof} From the uniformity property $(*)$ in Definition \ref{def:memorization}, it follows that 
+\begin{align}
+n \E H^+ \! = \sum_{i=1}^n \E H^+_i 
+\stackrel{(*)}= \! \sum_{i=1}^n \left( \left(1-\frac{q}{n} \right) H_i +  2L\left( \frac{q}{n} \right)h_i(w) \right)
+= (n-q) \bar H + \frac {2L q}n \sum_{i=1}^n h_i(w).
+\nonumber
+\end{align}
+Exploiting the fact that $\frac 1n \sum_{i=1}^n h_i(w) = f(w)-f(w^*) + 0= f^\delta(w)$  completes the proof. 
+\end{proof} 
+\label{lemma:hrecurrence2-appendix}
+\end{lemma}
+
+\begin{lemma}
+\label{lemma:lyapunov-appendix}
+Fix $c \in (0;1]$ and $\sigma \in [0;1]$ arbitrarily. For any uniform $q$-memorization algorithm with sufficiently small step size $\gamma$ such that
+\begin{align*}
+\gamma \le \frac{1}{L} \min \left\{\frac{K\sigma }{2K + 4c\sigma}, \frac{1-\sigma}{2} \right\}, \quad 
+\text{and} \quad K:=  \frac{4qL}{n \mu},
+\end{align*}
+we have that
+\begin{align}
+\E \L_\sigma(w^+,H^+)  \le (1-\rho) \L_\sigma(w,H),\quad \text{with} \quad \rho := c \mu \gamma.
+\end{align}
+Note that $\gamma < \frac 1{2L} \max_{\sigma \in [0,1]} \min\{ \sigma ,  1-\sigma\} = \frac{1}{4L}$ (in the $c \to 0$ limit).
+\begin{proof}
+From Lemma \ref{lemma:w-recurrence}, we can see that we will have $\rho \leq \gamma \mu$ based on the $ \| w - w^*\|^2$ part of $\L_\sigma$. Hence, we can write the rate as $\rho = c \mu \gamma$, where  $0 < c \leq 1$. 
+
+Let us now apply both, Lemma \ref{lemma:w-recurrence} and Lemma \ref{lemma:hrecurrence2}, to quantify the progress guaranteed to be made in one iteration of the algorithm in expectation, combining the changes to the iterate $w \to w^+$ as well as those to the memory $\alpha \to \alpha^+$ into $\L_\sigma$. Set $\triangle_\sigma := \L_\sigma(w,H) - \E \L_\sigma^+(w,H)$, then 
+\begin{align}
+\triangle_\sigma  = &  \| w- w^*\|^2 - \E \| w^+ - w^*\|^2 + S \sigma \,  \left( \bar H - \E \bar H^+ \right) \\
+\ge &  \gamma \mu \| w- w^*\|^2  - 2 \gamma^2  \E \| \alpha_i - f_i'(w^*)\|^2  + 2\gamma \left( 1 - 2\gamma L  \right) f^\delta(w) \nonumber \\
+& + S \sigma \left( \bar H -  \left( \frac{n-q}{n} \right) \bar H - \frac{2Lq}{n} \, f^\delta(w) ) \right).
+\nonumber
+\end{align}
+As we argued after Eq.~\eqref{eq:recurrence-h1}, the definition of $H_i$ combined with property~\eqref{eq:alpha-bound} ensure the crucial bound $\E\| \alpha_i - f_i'(w^*) \|^2 \le \bar H$. Including it and gathering terms in the same ``units", we get: 
+\begin{align}
+\triangle_\sigma \ge &  \; \gamma \mu \| w- w^*\|^2 + 
+\left[ S \sigma \left( \frac qn \right) - 2 \gamma^2  \right] \bar H 
+ \label{eq:recbrackets2}
++ 2 \left[ 
+   -S \sigma  L \left( \frac qn \right) 
+  + \gamma \left( 1 -2 \gamma L \right) 
+\right] f^\delta(w) 
+\end{align}
+We can further simplify the term in the second rectangular brackets with the definition of $S$ (in hindsight motivating its definition):
+\begin{align}
+- 2S \sigma  L \left( \frac qn \right)  + 2\gamma \left( 1 - 2\gamma L\right)
+= 2\gamma \left[ -\sigma + \left( 1 - 2 \gamma L \right) \right] 
+\end{align}
+We require this term to be non-negative, so that we can safely drop it. This leads an upper bound requirement on the step size:
+\begin{align}
+- \sigma + 1 - 2\gamma L \ge 0 \iff 
+\gamma \leq \frac{1- \sigma}{2 L}.
+\end{align}
+The term in the first rectangular brackets in Eq.~\eqref{eq:recbrackets2} needs to be $\ge \rho S \sigma$ in order to recover $\rho \L_\sigma = \rho \left( \| w- w^*\|^2 + S \sigma \bar H \right)$. Inserting the definition of $S$, $\rho$ and dividing by $\gamma$ yields 
+\begin{align}
+\frac {\sigma}{L} - 2 \gamma \ge \frac{\rho S \sigma}{\gamma}
+ = c \gamma \mu \frac{n \sigma}{L q} = \frac{4c  \sigma \gamma}{K}
+%
+& \iff \gamma \le  \frac 1L \frac{K \sigma}{2 K + 4 c \sigma}
+\end{align}
+We can summarize the derivation in the claimed combined inequality.
+\end{proof} 
+\end{lemma}
+
+\begin{theorem}
+\label{theorem:main-appendix}
+Consider  a uniform $q$-memorization algorithm. For any step size $\gamma = \frac a {4L}$, with $a<1$ the algorithm converges at a geometric rate of at least $(1-\rho(\gamma))$ with 
+\begin{align*}
+\rho(\gamma) = \frac{q}{n} \cdot \frac{1 - a}{1-a/2} 
+= \frac{\mu}{4L} \cdot \frac{K (1 - a)}{1-a/2}, \;\;  \text{if} \;\gamma \geq \gamma^*(K), \;\; 
+\text{otherwise} \;\; \rho(\gamma) = \mu \gamma   \;\; 
+\end{align*}
+where 
+\begin{align*}
+\gamma^*(K) :=  \frac {a^*(K)} {4 L}, \quad 
+a^*(K) := \frac{2K}{1+K + \sqrt{1+K^2}},
+%
+\quad K:=  \frac{4qL}{n \mu}
+\end{align*}
+\begin{proof} 
+Consider a fixed $\gamma < \frac 1{4L}$. There are potentially (infinitely) many choices of $(c,\sigma)$ that fulfill the condition in Eq.~\eqref{eq:gamma-admissible}. Among those, the largest rate is obtained by maximizing $c \le 1$ as $\rho(\gamma) = c \mu \gamma$. Note that for any $\gamma$ that does not achieve Eq.~\eqref{eq:gamma-admissible} with equality for both terms, one can find a larger $\gamma$ with the same choice of $c$ by either increasing (slack in the first inequality) or decreasing (slack in the second inequality) $\sigma$. We thus focus on step sizes that are maximal for some choice of $(c,\sigma)$. Equality with the second bound directly gives us
+\begin{align} \label{eq:sigma-star}
+\frac 1 L \frac{1-\sigma}{2} \stackrel != \gamma \; \Longrightarrow \; \sigma^*  = 1 - 2L \gamma.
+\end{align} We plug this into the first bound and again equal $\gamma$, which yields an optimality condition for $c$
+\begin{align}
+& L \gamma  \stackrel != \frac{K \sigma^*}{2K + 4c \sigma^* } 
+ %
+ \iff   c^*  %
+= \frac K{4\gamma L} \left[ 1 - \frac{2 \gamma L}{\sigma^*} \right]
+\Longrightarrow c^* = \frac K{4\gamma L}  \frac{1 - 4 L \gamma}{1 - 2L \gamma}
+\label{eq:c-optimal}
+\end{align}
+and thus
+\begin{align}
+& \rho = c \mu \gamma = \frac{\mu K}{4L} \frac{1 - 4 L \gamma}{1 - 2L \gamma}
+= \frac{q}{n}  \frac{1 - 4 L \gamma}{1 - 2L \gamma}
+\end{align}
+It remains to check what the admissible range of $\gamma$ is that achieves the bound in Eq.~\eqref{eq:gamma-admissible} as we required. The latter is determined by the constraints $c \in (0;1]$.  From Eq.~\eqref{eq:c-optimal} we can read off for $c^*>0$, 
+\begin{align}
+1 - 4 L \gamma > 0  \iff \gamma < \frac {1}{4L} \,.
+\end{align}
+At the other extreme of $c=1$ we can solve the resulting quadratic equation in $\gamma$ 
+\begin{align}
+\gamma =  \frac{q}{n \mu}  \frac{1 - 4 L \gamma}{1 - 2L \gamma} = 
+\frac{K}{4L} \frac{1 - 4 L \gamma}{1 - 2L \gamma} 
+\end{align}
+to get $\gamma= \gamma^*(K)$ as claimed in Eq.~\eqref{eq:gammalk} (excluding the second root which yields $\gamma > \frac{1}{4L}$). Moreover, for $\gamma < \gamma^*(K)$  we choose $c=1$ to maximize the rate and have $\rho = \mu \gamma$.
+\end{proof}
+\end{theorem}
+
+%
+%
+%
+%
+%
+%
+
+\begin{corollary}
+\label{corollary:opt-rho-appendix}
+In Theorem \ref{theorem:main}, $\rho$ is maximized for $\gamma = \gamma^*(K)$. We can write $\rho^*(K) = \rho(\gamma^*)$ as 
+\begin{align*}
+\rho^*(K) = 
+\frac \mu {4L} a^*(K) %
+= \frac{q}{n}\frac{a^*(K)}{K} = \frac qn \left[ \frac{2}{1+K + \sqrt{1 + K^2} } \right]
+\end{align*}
+In the big data regime $\rho^* = \frac qn (1-\frac 12 K + O(K^3))$, whereas in the ill-conditioned case $\rho^* = \frac \mu{4L} (1 - \frac {1}{2}K^{-1} + O(K^{-3}))$.
+\begin{proof}
+Plugging in the definitions of $\gamma^*(K)$ and $K$ and performing some symbolic simplifications yields the result. 
+\end{proof}
+\end{corollary}
+
+
+
+\begin{corollary}
+\label{corollary:universal-appendix}
+Choosing $\gamma = \frac{2 -\sqrt{2} }{4L}$, leads to $\rho(\gamma) \ge (2 - \sqrt{2}) \rho^* > \frac 12 \rho^*$.
+\begin{proof} 
+Write $\gamma = \frac{a}{4L}$, then if $\gamma \geq \gamma^*(K)$: $\frac{\rho}{\rho^*} \geq \frac{1 - a}{1- a/2}$, otherwise: $ \frac{\rho}{\rho^*} = \frac{\gamma}{\gamma^*} \ge  a$, with equality when $K = \infty$. Setting both equal yields $a =  2 - \sqrt{2} \approx 0.5858$. 
+\end{proof} 
+\end{corollary}
+
+\begin{corollary}
+Choosing $\gamma = \frac{a}{4L}$ with $ a<1$ yields $\rho = \min\{ \frac {1-a}{1 - \frac 12 a} \frac qn, \frac{a}{4} \frac \mu L \}$. In particular, we have for the choice $\gamma = \frac{1}{5L}$ that $\rho = \min\{ \frac {1}{3} \frac qn, \frac 15 \frac \mu L \}$.
+\begin{proof} 
+If $\gamma \ge \gamma^*(R)$ then $\rho = \frac{1-a}{1 -a/2}\frac qn = \frac{1}{3} \frac{q}{n}$; otherwise, $\rho = \mu \gamma = \mu \frac{a}{4L} = \frac{1}{5} \frac{\mu}{L}$.
+\end{proof} 
+\end{corollary}
+
+\begin{theorem}
+\label{theorem:approximate-appendix}
+Consider a uniform $q$-memorization algorithm with $\alpha$-updates that are on average $\epsilon$-accurate (i.e. $\E\| \alpha_i - \beta_i \|^2 \le \epsilon$). For any step size $\gamma \le \tilde{\gamma}(K)$, where $\tilde{\gamma}$ is given in Eq.~\eqref{eq:atilde} in Corollary~\ref{corollary:patch} below (note that $\tilde{\gamma}(K) \geq \frac{2}{3} \gamma^*(K)$ and $\tilde{\gamma}(K) \to \gamma^*(K)$ as $K \to 0$), we get 
+\begin{align}
+\Efull \L(w^t,H^t) \le  (1-\mu \gamma)^t  \L_0+ \frac{4 \gamma \epsilon}{\mu}, \quad \text{ with } \L_0 := \|w^0 - w^*\|^2 + s(\gamma) \E \|f_i(w^*)\|^2 ,
+\end{align}
+where $\Efull$ denote the (unconditional) expectation over histories (in contrast to $\E$ which is conditional), and $ s(\gamma) := \frac{4 \gamma}{K \mu} (1-2 L \gamma)$.
+\begin{proof} Following the same line of argument as in Lemma \ref{lemma:lyapunov} and Theorem \ref{theorem:main} with the modifications summarized in Corollary \ref{corollary:patch}
+\begin{align*}
+\E \L(w^+,H^+) \le  (1-\gamma\mu)  \L(w,H) + 4 \gamma^2 \epsilon
+\end{align*}
+and unrolling the recurrence over $t$ \vspace*{-5mm}
+\begin{align*} 
+    \Efull \L(w^t,H^t) \le  (1-\gamma\mu)^t  \L(w^0,H^0) + \overbrace{\left[ \sum_{s=0}^{t-1} (1- \gamma\mu)^s\right]}^{\leq 1/(\gamma \mu)} 4 \gamma^2 \epsilon
+\end{align*}
+using $\frac{1}{1-x} = \sum_{s=0}^\infty x^s$ applied with $x=(1-\rho)$ (see \cite{schmidt2014convergence} for its use for constant step size SGD). According to Eq.~\eqref{eq:lyapunov_fct}, $\L(w^0, H^0) = \|w-w^*\|^2 + S \sigma \bar{H}^0$, where $S = \frac{\gamma n}{L q} = \frac{4 \gamma}{K \mu}$. As the algorithm initializes $\alpha_i^0$ to $0$, we have $\bar{H}^0 = \E \|f'_i(w^*)\|^2$. Finally, the proof of Corollary~\ref{corollary:patch} follows the proof of Theorem~\ref{theorem:main-appendix} and also gives $\sigma^* = 1-2 L \gamma$ as in Eq.~\eqref{eq:sigma-star}. Substituting in $\L(w^0, H^0)$ gives $\L_0$.
+\end{proof}
+\end{theorem} 
+
+\begin{corollary}
+With $\gamma = \min\{\mu , \tilde{\gamma}(K)\}$ we have 
+\begin{align*}
+\frac {4 \gamma \epsilon }{\mu}  \le 4 \epsilon, \qquad 
+\text{with a rate} \quad \rho = \min\{\mu^2, \mu \tilde{\gamma}\} \, .
+\end{align*}
+\begin{proof}
+By definition, $\gamma \leq \mu$, thus $\gamma/ \mu \leq1$, yielding the first claim. By definition, we also have $\gamma \leq \tilde{\gamma}(K)$, thus from Theorem~\ref{theorem:main} adapted to Corollary~\ref{corollary:patch}, we know that $\rho = \mu \gamma$, which concludes the proof. (Note that  with $\gamma> \tilde{\gamma}(K)$ we will increase the error, while decreasing $\rho(\gamma) \le \tilde{\rho} = \mu \tilde{\gamma}$. This is why this choice is not sensible according to our theory.)
+\end{proof} 
+\end{corollary} 
+
+\begin{corollary}[Patch-ups]
+\label{corollary:patch}
+Using Eq.\eqref{eq:alpha-tilde-bound} instead of Eq.~\eqref{eq:alpha-bound}, but then setting $\epsilon_i = 0$ yields the same results as before with the following changes: \\[3mm]
+(a) Lemma \ref{lemma:lyapunov}: the bound becomes $\gamma \le \frac 1L \min \{ \frac 14 \frac{K \sigma}{K + c\sigma}, \frac {1-\sigma}{2} \} <  \frac{1}{6L}$. \\
+(b) Theorem  \ref{theorem:main}: still using $\gamma = \frac{a}{4L}$, we require $a < \frac{2}{3}$ and we get a similar (slightly smaller) expression for $\rho$ as well as for the optimal step size $\tilde{\gamma}(K) := \frac{\tilde{a}(K)}{4L}$ replacing $\gamma^*$ in the theorem:
+\begin{align} \label{eq:atilde}
+\rho = \frac qn \frac{1-\frac 32 a}{1-\frac 12 a} \quad \text{and} \quad \tilde{a}(K) = \frac{2K}{1 + \frac3 2 K + \sqrt{1 + K + \left(\frac{3}{2}K \right)^2}} \geq \frac{2}{3} a^*(K) \, .
+\end{align}
+(c) The optimal asymptotic rate is  still $\tilde{\rho} \stackrel {n \to \infty} \longrightarrow  \frac qn$.
+\begin{proof}
+Redoing all proofs with an additional factor of $2$ on the RHS of  Eq.~\eqref{eq:alpha-bound}. One can also readily verify that the ratio $\frac{\tilde{a}(K)}{a^*(K)}$ (with $a^*(K)$ defined in Eq.~\eqref{eq:gammalk}) is a decreasing function of $K$, with value $1$ for $K=0$, and limiting value $\frac{2}{3}$ for $K \to \infty$.
+\end{proof}
+\end{corollary} 
+
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+
+\subsection{Implementation details}
+
+\paragraph{Construction of the neighborhoods required by q-SAGA and ${\cal N}$-SAGA:} 
+For each datapoint~$i$, we want to define a neighborhood ${\cal N}_i$ (defined as the set of children of $i$ in a directed graph) such that for $j \in {\cal N}_i$,
+$\| \alpha_j - \beta_j \|^2 \le \epsilon$. The approximation bounds in Section~\ref{sect:sharing} show that this distance is a function of $w$, which is not known {\it a priori}. In order to address this issue, we used the distance between data points $\delta_{ij} := \| x_i - x_j \|$ as a surrogate. The construction of the neighborhoods then amounts to constructing a directed graph on $n$ nodes by setting the $q$ nearest points to $j$ as its \emph{parents}.\footnote{This can be naively implemented by computing all pairwise distances $\delta_{ij}$ between data points ($O(n^2)$), but more efficient data structures using hashing~\cite{andoni2018LSH} or randomized partition trees~\cite{dasgupat2015RPT} can be used.} This ensures that $| \{i: j \in {\cal N}_i\}|=q$ $(\forall j)$, i.e. every $j$ has exactly $q$ parents.
+Note that this simple construction can yield asymmetric neighborhoods (i.e. $j \in {\cal N}_i \centernot\implies i \in {\cal N}_j$); ${\cal N}_i$ is the set of children of $i$, and does not have to be of size $q$. 
+One could also construct a symmetric neighborhood by defining $j$ to be a child of $i$ if their distance is less than $\sqrt{\epsilon}$ (which is a symmetric relationship), where $\epsilon$ is a constant chosen such that $q \approx 20$. In practice, we did not find this construction to yield better performance (in addition to violating the uniform $q$-memorization property). Note also that the above constructions ensure that $i \in {\cal N}_i$.
+
+\paragraph{Growing $n$ heuristic:} For all the $q$-memorization algorithms, we used the same initialization heuristic proposed in~\cite{schmidt2013minimizing,defazio2014} for which during the first pass, datapoints are introduced one by-one, with averages computed in terms of the number datapoints processed so far (i.e. the normalization for $\bar{\alpha}$ is the number of different points seen so far instead of $n$).
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%

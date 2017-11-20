@@ -1,0 +1,163 @@
+
+\section{Correction and Local Search Steps in Algorithm \ref{alg:algInfadaptive}}
+
+Algorithm~\ref{alg:algReopt} details the $\CORRECTION$ procedure used in line~16 of Algorithm~\ref{alg:algInfadaptive} to implement the correction step of the FCFW algorithm.
+It uses the modified Frank-Wolfe algorithm (FW with away steps), as detailed in Algorithm~\ref{alg:MFW}.
+Algorithm~\ref{alg:algLocalSearch} depicts the $\LOCALSEARCH$ procedure used in line~17 of Algorithm~\ref{alg:algInfadaptive}. The local search is performing FW over $\Meps$ for
+a fixed $\shrinkAmount$ using the iterated conditional mode algorithm as an approximate
+FW oracle. This enables the finding in a cheap of way of more vertices to augment
+the correction polytope $V$.
+
+
+\begin{algorithm}
+	\caption{Re-Optimizing over correction polytope $V$ using MFW, $f$ is the negative TRW objective}
+	\label{alg:algReopt}
+	\begin{algorithmic}[1]
+		\STATE $\CORRECTION(\x^{(0)},V,\shrinkAmount,\vrho)$
+		\STATE Let $f(\cdot) := \text{-TRW}(\cdot;\vtheta,\vrho)$; we use MFW to optimize over the contracted correction polytope $\conv(V_\shrinkAmount)$ 
+		where $V_\shrinkAmount := (1-\shrinkAmount) V + \shrinkAmount \unif$.
+		\STATE Let $\epsilon$ be the desired accuracy of the approximate correction.
+		\STATE Let $\bm{\alpha}^{(0)}$ be such that $\x^{(0)} = \sum_{\vv \in V_\shrinkAmount} \alpha^{(0)}_\vv \vv$.
+		\STATE $\x^{(\mathrm{new)}} \leftarrow \textbf{MFW}(\x^{(0)}, \bm{\alpha}^{(0)}, V_\shrinkAmount, \stopCrit)$ \algComment{see Algorithm~\ref{alg:MFW}}
+		\STATE \textbf{return} $\x^{(\mathrm{new)}}$
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Local Search using Iterated Conditional Modes, $f$ is the negative TRW objective}
+	\label{alg:algLocalSearch}
+	\begin{algorithmic}[1]
+		\STATE $\LOCALSEARCH(\x^{(0)},\vv_{\mathrm{init}},\shrinkAmount,\vrho)$
+		\STATE $\s^{(0)}\leftarrow \vv_{\mathrm{init}}$
+		\STATE $V\leftarrow {\emptyset}$
+		\FOR{$k=0\ldots \MAXITS$}
+		 \STATE $\tilde{\theta} = \nabla f(\xk;\vtheta,\vrho)$
+		 \STATE $\snext\leftarrow $ICM$(-\tilde{\theta},\sk)$ \quad\emph{\small (Approximate FW search using ICM; \\ \hspace{35mm} we initialize ICM at previously found vertex $\sk$)}
+		 \STATE $\snext_{(\shrinkAmount)} \leftarrow (1-\shrinkAmount)\s^{(k+1)}+\shrinkAmount\unif$
+		 \STATE $V\leftarrow V \cup \{\snext\}$
+		 \STATE $\dkeps\leftarrow\snext_{(\shrinkAmount)}-\x^{(k)}$
+		 \STATE Line-search: $\stepsize_k \in \displaystyle\argmin_{\stepsize \in [0,1]} \textstyle f\left(\x^{(k)} + \stepsize \dkeps\right)$
+ 		 \STATE Update $\x^{(k+1)} := \x^{(k)} + \stepsize_k  \dkeps$  \algComment{FW update}
+		\ENDFOR 
+		\STATE \textbf{return} $\xnext,V$
+	\end{algorithmic}
+\end{algorithm}
+
+%
+%
+%
+%
+%
+%
+%
+
+\section{Comparison to perturbAndMAP}
+%
+
+\textbf{Perturb \& MAP.} We compared the performance between our method and perturb \& MAP for 
+inference on $10$ node Synthetic cliques. We expand on the method we used to evaluate perturbAndMAP in Figure~\ref{fig:syntheticComplete_tightening_l1} 
+and~\ref{fig:syntheticComplete_tightening_logz}. 
+We re-implemented the algorithm to estimate the partition function in Python (as described in \citet{hazan2012partition}, Section 4.1) 
+and used toulbar2~\citep{allouche2010toulbar2}
+to perform MAP inference over an inflated graph where every variable maps to
+five new variables. 
+The log partition function is estimated as the mean energy of 10 exact MAP calls
+on the expanded graph where the single node potentials are perturbed by draws from the Gumbel distribution.
+To extract marginals, we fix the value of a variable to every assignment, estimate the log partition function 
+of the conditioned graph and compute beliefs based on averaging the results of adding the unary potentials
+to the conditioned values of the log partition function. 
+%
+%
+%
+%
+%
+%
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+
+
+%
+\section{Correction Steps for Frank-Wolfe over $\MARG$}
+Recall that the correction step is done over the correction polytope, 
+the set of all vertices of $\MARG$ encountered thus far in the algorithm.
+On experiments conducted over $\MARG$, we found that using a better correction algorithm often \emph{hurt} performance.
+This potentially arises in other constrained optimization problems
+where the gradients are unbounded at the boundaries of the polytope. We found that better correction steps
+over the correction polytope (the convex hull of the vertices explored by the MAP solver, denoted $V$ in Algorithm \ref{alg:algInfadaptive}), often resulted in a solution at or near a boundary of the marginal polytope (shared
+with the correction polytope).
+This resulted in the iterates becoming too small. We know that the Hessian of $\TRW$ is ill conditioned
+near the boundaries of the marginal polytope. Therefore, we hypothesize that this is because the 
+gradient directions obtained
+when the iterates became too small are simply less informative.
+Consequently, the optimization over $\MARG$ suffered. We found that the duality gap over $\MARG$ 
+would often increase after a correction step when this phenomenon occurred.
+The variant of our algorithm based on $\Meps$ is less sensitive to this issue since the restriction 
+of the polytope bounds the smallest marginal and therefore also controls the quality of the gradients obtained.
+
+\section{Additional Experiments}
+
+For experiments on the $10$ node synthetic cliques, we can also track the average number of ILP calls required to converge to a fixed 
+duality gap
+for any $\theta$. This is depicted in Figure~\ref{fig:syntheticILPvstheta}. 
+Optimizing over $\TREEPOL$ realized three to four times as many MAP calls as the first iteration of inference. 
+
+Figure~\ref{fig:chineseChar_appendix} depicts additional examples from the Chinese Characters test set. Here, we also visualize results
+from a wrapper around TRBPs implementation in libDAI~\citep{Mooij_libDAI_10} that performs tightening over $\TREEPOL$. 
+Here too we find few gains over optimizing over $\mathbb{L}$.
+
+Figure~\ref{fig:MvsM_eps_l1_1},~\ref{fig:MvsM_eps_l1_2} depicts the comparison of convergence of algorithm variants 
+over $\MARG$ and $\Meps$ (same setup as Figure~\ref{fig:M_M_eps},~\ref{fig:M_M_eps2}. Here, we plot~$\zeta_{\mu}$.
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth]{./images/chineseChar/appendix_chinese.pdf}
+\caption{Chinese Characters : Additional Experiments. TRBP (opt) denotes our implementation of tightening over $\TREEPOL$ using a wrapper over libDAI~\citep{Mooij_libDAI_10}}
+\label{fig:chineseChar_appendix}
+\end{figure}
+
+\begin{figure}
+\centering
+\subfigure[\small{$\zeta_{\mu}$: $5\times5$ grid, $\MARG$ vs $\MARG_{\shrinkAmount}$}]{
+	\includegraphics[height=6cm,width=4cm,keepaspectratio]{./images/M_M_eps/gridWi5Tr_M_M_eps_l1_maxrho1.pdf}
+\label{fig:MvsM_eps_l1_1}
+}
+\centering
+\subfigure[\small{$\zeta_{\mu}$: $10$ node clique, $\MARG$ vs $\MARG_{\shrinkAmount}$}]{
+\includegraphics[height=6cm,width=4cm,keepaspectratio]{./images/M_M_eps/synthetic_M_M_eps_l1_maxrho1.pdf}
+\label{fig:MvsM_eps_l1_2}
+}
+\centering
+\subfigure[\small{Average ILP calls versus $\theta$: $10$ node clique}]{
+\includegraphics[height=4cm,width=5cm,keepaspectratio]{./images/Synthetic/SyntheticILPcallsVsTheta.pdf}
+\label{fig:syntheticILPvstheta}
+}
+\caption{Figure~\ref{fig:MvsM_eps_l1_1},~\ref{fig:MvsM_eps_l1_2} depict $\zeta_{\mu}$ corresponding to the experimental setup in Figure~\ref{fig:M_M_eps},~\ref{fig:M_M_eps2} respectively. Figure \ref{fig:syntheticILPvstheta} explores the average number of ILP calls taken to convergence with and without optimizing over $\vrho$} 
+\vspace{-3mm}
+\end{figure}

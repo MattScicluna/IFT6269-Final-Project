@@ -1,0 +1,308 @@
+\section{Experiments}
+\label{sec:experiments}
+
+In this section, we first describe our dataset, the object tracking pipeline and the feature representation for object tracklets and videos (Section~\ref{sec:dataset}). 
+We consider two experimental set-ups. 
+In the first weakly-supervised set-up (Section~\ref{sec:exp_res}), we apply our method on a set of video clips which we know contain the action of interest but do not know its precise temporal localization. 
+In the second, more challenging ``in the wild" set-up (Section~\ref{sec:exp_weak}), the input set of weakly-supervised clips is obtained by automatic processing of text associated with the videos and hence may contain erroneous clips that do not contain the manipulation action of interest.         
+The data and code are available online~\cite{Alayrac16ObjectStatesWeb}. 
+%
+%
+%
+%
+%
+
+
+\subsection{Dataset and features}
+\label{sec:dataset}
+
+%
+%
+%
+%
+%
+%
+\noindent\textbf{Dataset of manipulation actions.}
+We build a dataset of manipulation actions by collecting videos from different sources: the instructional video dataset introduced in~\cite{Alayrac15Unsupervised}, the Charades dataset from~\cite{varol16hollywood}, and some additional videos downloaded from YouTube. We focus on ``third person" videos (rather than egocentric) as such videos depict a variety of people in different settings and can be obtained on a large scale from YouTube.
+We annotate the precise temporal extent of seven different actions\footnote{\textit{put the wheel on the car (47 clips)}, \textit{withdraw the wheel from the car (46)}, \textit{place a plant inside a pot (27)}, \textit{open an oyster (28)}, \textit{open a refrigerator (234)}, \textit{close a refrigerator (191)} and \textit{pour coffee (57)}.} applied to five distinct objects\footnote{\textit{car wheel}, \textit{flower pot}, \textit{oyster}, \textit{refrigerator} and \textit{coffee cup}.}. 
+This results in 630 annotated occurrences of ground truth manipulation action. 
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+To evaluate object state recognition, we define a list of two states for each object. %
+We then run automatic object detector for each involved object, track the detected object occurrences throughout the video and then subdivide the resulting long tracks into short tracklets.
+%
+%
+%
+Finally, we label ground truth object states for tracklets within $\pm$40 seconds of each manipulation action.  
+We label four possible states: \textit{state 1}, \textit{state 2}, \textit{ambiguous state} or \textit{false positive detection}.
+The ambiguous state covers the (not so common) in-between cases, such as cup half-full.  
+In total, we have 19,499 fully annotated tracklets out of which: $35\%$ cover \textit{state 1} or \textit{state 2}, $25\%$ are ambiguous, and $40\%$ are false positives.
+Note that this annotation is only used for evaluation purpose, and not by any of our models.
+Detailed statistics of the dataset are given in Appendix~\ref{app:dataset}.
+
+\noindent\textbf{Object detection and tracking.}
+In order to obtain detectors for the five objects, we finetune the FastRCNN network~\cite{girsh15fastrcnn} with training data from ImageNet~\cite{imagenet09}.
+We use bounding box annotations from ImageNet when available (\eg the ``wheel" class).
+For the other classes, we manually labeled more than 500 instances per class.
+%
+In our set-up with only moderate amount of training data, we observed that class-agnostic object proposals combined with FastRCNN performed better than FasterRCNN~\cite{ren2015faster}.
+In detail, we use geodesic object proposals~\cite{kra2014gop} and set a relatively low object detection threshold ($0.4$) to have good recall.
+We track objects using a generic KLT tracker from~\cite{Bojanowski13finding}.
+The tracks are then post-processed into shorter tracklets that last about one second and thus are likely to have only one object state.
+%
+
+\noindent\textbf{Object tracklet representation.}
+For each detected object, represented by a set of bounding boxes over the course of the tracklet, we compute a CNN feature from each (extended) bounding box that we then average over the length of the tracklet to get the final representation.
+The CNN feature is extracted with a ROI pooling~\cite{ren2015faster} of ResNet50~\cite{he16resnet}.
+The ROI pooling notably allows to capture some context around the object which is important for some cases (\eg \textit{wheel} ``on" or ``off" the car).
+The resulting feature descriptor of each object tracklet is 8,192 dimensional.
+
+\noindent\textbf{Representing video for recognizing actions.}
+Following the approach of~\cite{Alayrac15Unsupervised,Bojanowski14weakly,Bojanowski15weakly}, each video is divided into chunks of 10 frames that are represented by a motion and appearance descriptor averaged over 30 frames.
+For the motion we use a 2,000 dimensional bag-of-word representation of histogram of local optical flow (HOF) obtained from Improved Dense Trajectories~\cite{Wang13action}.
+Following~\cite{Alayrac15Unsupervised}, we add an appearance vector that is obtained from a 1,000 dimensional bag-of-word vector of conv5 features from VGG16~\cite{Simonyan14vggnets}.
+This results in a 3,000 dimensional feature vector for each chunk of 10 frames.
+
+\begin{table*}[t!]
+	\centering
+	\resizebox{0.74\textwidth}{!}{
+		\begin{tabular}{clccccccc|c}
+			\noalign{\hrule height 1.3pt}
+			\multicolumn{1}{l}{}                                                                                     & \multicolumn{1}{c}{}                         & put           & remove        & fill          & open          & fill          & open          & close         & \multicolumn{1}{l}{}                          \\
+			\multicolumn{1}{l}{}                                                                                     & \multicolumn{1}{c}{\multirow{-2}{*}{Method}} & wheel         & wheel         & pot           & oyster        & coff.cup      & fridge        & fridge        & \multicolumn{1}{l}{\multirow{-2}{*}{\textbf{Average}}} \\ \noalign{\hrule height 1pt}
+			
+			& (\textbf{a}) Chance                        & 0.10         & 0.11          & 0.10          & 0.07          & 0.06 & 0.10         & 0.10          & 0.09                                          \\
+			
+			& (\textbf{b}) Kmeans                                   & 0.25          & 0.12          & 0.11          & 0.23          & 0.14          & 0.19          & 0.22          & 0.18                                         \\
+			& (\textbf{c}) Constraints only                       & 0.35          & 0.38          & 0.35          & 0.36          & 0.31 & 0.29         & 0.42          & 0.35                                          \\
+			
+			& (\textbf{d}) Salient state only                       & 0.35          & 0.48          & 0.35          & 0.38          & 0.30          & 0.40          & 0.37          & 0.38                                          \\
+			
+			& (\textbf{e}) At least one state only                  & 0.43 & 0.55 & 0.46          & 0.52          & 0.29          & 0.43          & 0.39          & 0.44                                          \\
+			
+			
+			
+			& (\textbf{f}) Joint model                              & \textbf{0.52}          & 0.59          & \textbf{0.50} & 0.45 & 0.39          & \textbf{0.47} & \textbf{0.47} & 0.48                                 \\
+			
+			&(\textbf{g}) Joint model + det. scores.                                             & 0.47          & \textbf{0.65}          & \textbf{0.50}          & \textbf{0.61}        & \textbf{0.44}          & 0.46          & 0.43          & \textbf{0.51}                                         \\ \cline{2-10} 
+			
+			\multirow{-8}{*}{\textbf{\begin{tabular}[c]{@{}c@{}}State\\ discovery\end{tabular}}} & (\textbf{h}) Joint + GT act. feat.                    & 0.55          & 0.56          & 0.56          & 0.52          & 0.46          & 0.45          & 0.49          & 0.51                                          \\ \noalign{\hrule height 1pt}
+			& (\textbf{i})\phantom{ii} Chance                                   & 0.31          & 0.20          & 0.15          & 0.11          & 0.40          & 0.23          & 0.17          & 0.22                                          \\
+			& (\textbf{ii})\phantom{i} \cite{Bojanowski15weakly}      & 0.24          & 0.13          & 0.11          & 0.14          & 0.26          & 0.29          & 0.23          & 0.20                                          \\
+			& (\textbf{iii}) \cite{Bojanowski15weakly} + object cues                          & 0.24          & 0.13          & 0.26          & 0.07          & \textbf{0.84} & 0.33          & 0.37          & 0.32                                          \\
+			& (\textbf{iv})\phantom{i} Joint model                             & \textbf{0.67} & \textbf{0.57} & \textbf{0.48} & \textbf{0.32} & 0.82          & \textbf{0.57} & \textbf{0.44} & \textbf{0.55}                                 \\ \cline{2-10} 
+			\multirow{-5}{*}{\textbf{\begin{tabular}[c]{@{}c@{}}Action \\ localization\end{tabular}}}                      & (\textbf{v})\phantom{i\textbf{i}} Joint + GT stat. feat.                   & 0.72          & 0.66          & 0.44          & 0.46          & 0.86          & 0.55          & 0.44          & 0.59                                          \\ \noalign{\hrule height 1.3pt}
+		\end{tabular}
+	}
+	\vspace{-2mm}
+	\caption{\small State discovery (top) and action localization results (bottom). \label{tab:quantres}}
+\vspace*{-3mm}	
+\end{table*}
+
+
+\subsection{Weakly supervised object state discovery}
+%
+\label{sec:exp_res}
+
+\noindent\textbf{Experimental setup.}
+We first apply our method in a weakly supervised set-up where for each action we provide an input set of clips, where we know the action occurs somewhere in the clip
+but we do not provide the precise temporal localization.  Each clip may contain other actions that affect other objects or actions that do not affect any object at all (e.g. walking / jumping). The input clips are about 20s long and are obtained by taking approximately $\pm$ 10s of each annotated manipulation action.  
+%
+%
+
+%
+%
+%
+%
+%
+
+
+\noindent\textbf{Evaluation metric: average precision.}
+For all variants of our method, we use the rounded solution that reached the smallest objective during optimization.
+We evaluate these predictions with a precision score averaged over all the videos.
+A temporal action localization is said to be correct if it falls within the ground truth time interval.
+Similarly, a state prediction is correct if it matches the ground truth state.\footnote{In particular, we count ``\textit{ambiguous}" labels as incorrect.}
+Note that a ``precision" metric is reasonable in our set-up as our method is forced to predict in all videos, i.e. the recall level is fixed to all videos and the method cannot produce high precision with low recall. 
+
+\noindent\textbf{Hyperparameters.}
+In all methods that involve a discriminative clustering objective, we used $\lambda=10^{-2}$ (action localization) and $\mu=10^{-4}$ (state discovery) for all 7 actions. 
+For joint methods that optimize~\eqref{eq:jointstateactionprob}, we set the weight $\nu$ of the distortion measure~\eqref{eq:distGlobal} to $1$.
+
+\noindent\textbf{State discovery results.}
+Results are shown in the top part of Table~\ref{tab:quantres}.
+In the following, we refer to ``State only" whenever we use our method without looking at the action cost or the distortion measure~\eqref{eq:jointstateactionprob}.
+We compare to two baselines for the state discovery task.
+Baseline~(\textbf{a}) evaluates chance performance.
+Baseline~(\textbf{b}) performs K-means clustering of the tracklets with $K=3$ (2 clusters for the states and 1 for false positives).
+We report performance of the best assignment for the solution with the lowest objective after 10 different initializations.
+Baseline~(\textbf{c}) is obtained by running our ``State only" method while using random features for tracklet representation as well as "at least one ordering" and "non overlap" constraints. We use random features to avoid non-trivial analytic derivation for the "Constraints only" performance. This baseline reveals the difficulty of the problem and quantifies improvement brought by the ordering constraints.
+The next two methods are ``State only" variants.
+Method~(\textbf{d}) corresponds to a replacement of the ``at least one constraint" by an ``exactly one constraint" while the method~(\textbf{e}) uses our new constraint.
+Finally, we report three joint methods that use our new joint rounding technique~\eqref{eq:jcrrounding} for prediction.
+Method~(\textbf{f}) corresponds to our joint method that optimizes~\eqref{eq:jointstateactionprob}.
+Method~(\textbf{g}) is a simple improvement taking into account object detection score in the objective (details below). %
+Finally, method~(\textbf{h}) is our joint method but using the action ground truth labels as video features in order to test the effect of having perfect action localization for the task of object state discovery. 
+
+We first note that method~(\textbf{e}) outperforms~(\textbf{d}), thus highlighting the importance of the ``at least one" constraint for modeling object states.
+While the saliency approach (taking only the most confident detection per video) was useful for action modeling in~\cite{Bojanowski15weakly}, it is less suitable for our set-up where multiple tracklets can be in the same state.
+%
+The joint approach with actions~(\textbf{f}) outperforms the ``State only" method~(\textbf{e}) on 6 out of 7 actions and obtains better average performance,  confirming the benefits of joint modeling of actions and object states.
+Using ground truth action locations further improves results (cf.~(\textbf{h}) against (\textbf{f})).
+Our weakly supervised approach~(\textbf{f}) performs not much lower compared to using ground truth actions (\textbf{h}), except for the states of the coffee cup (empty/full). In this case we observe that a high number of false positive detections confuses our method.
+A simple way to address this issue is to add the object detection score into the objective of our method, which then prefers to assign object states to higher scoring object candidates further reducing the effect of false positives.  
+This can be done easily by adding a linear cost reflecting the object detection score to objective~\eqref{eq:jointstateactionprob}.
+We denote this modified method ``(\textbf{g}) Joint model + det. scores". 
+This method achieves the best average performance and highlights that additional information can be easily added to our model.
+
+\noindent\textbf{Action localization results.}
+We compare our method to three different baselines and give results in the bottom part of Table~\ref{tab:quantres}.
+Baseline~(\textbf{i}) corresponds to chance performance, where the precision for each clip is simply the proportion of the entire clip taken by the ground truth time interval.
+Baseline~(\textbf{ii}) is the method introduced in~\cite{Bojanowski15weakly} used here with only one action. It also corresponds to a special case of our method where the object state part of the objective in equation~\eqref{eq:jointstateactionprob} is turned off (salient action only).
+Interestingly, this baseline is actually worse than chance for several actions. This is because without additional information about objects, this method localizes  other common actions in the clip and not the action manipulating the object of interest. This also demonstrates the difficulty of our experimental set-up where the input video clips often contain multiple different actions.
+%
+%
+To address this issue, we also evaluate baseline~(\textbf{iii}), which complements~\cite{Bojanowski15weakly} with the additional constraint that the action prediction has to be within the first and the last frame where the object of interest is detected, improving the overall performance above chance.
+%
+Our joint approach~(\textbf{iv}) consistently outperforms these baselines on all actions, thus showing again the strong link between object states and actions.
+Finally, the approach~(\textbf{v}) is the analog of method~(\textbf{g}) for action localization where we use ground truth state labels as tracklet features in our joint formulation showing that the action localization can be further improved with better object state descriptors.
+In addition, we also compare to a supervised baseline.
+The average obtained performance is 0.58 which is not far from our method. 
+This demonstrates the potential of using object states for action localization. 
+More details on this experiment are provided in Appendix~\ref{app:supervised}.
+
+\noindent\textbf{Benefits of joint object-action modeling.}
+We observe that the joint modeling of object states and actions benefits both tasks.
+This effect is even stronger for actions.  
+Intuitively, knowing perfectly the object states reduces a lot the search space for action localization. 
+Moreover, despite the recent major progress in object recognition using CNNs, action recognition still remains a hard problem with much room for improvement. 
+Qualitative results are shown in Fig.~\ref{fig:qualres} and failure cases of our method are discussed in~\ref{app:failcases}.
+	
+\begin{figure}
+	\raggedleft    
+	%
+	\includegraphics[width=0.99\linewidth]{figs/qual_res_slim.pdf}
+	\caption{\small Qualitative results for joint action localization (middle) and state discovery (left and right) (see Fig.~\ref{fig:teaser} for ``\textit{fill coffee cup}").}
+	\vspace*{-.5cm}
+	\label{fig:qualres}
+\end{figure}
+
+\subsection{Object state discovery in the wild}
+\label{sec:exp_weak}
+Towards the discovery of a large number of manipulation actions and state changes, we next apply our method in an automatic setting, where action clips have been obtained using automatic text-based retrieval.
+%
+%
+%
+
+%
+ 
+%
+%
+%
+%
+%
+
+\noindent\textbf{Clip retrieval by text.}
+Instructional videos~\cite{Alayrac15Unsupervised,Malmaud15what,Sener15unsupervised} usually come with a narration provided by the speaker describing the performed sequence of actions. In this experiment, we keep only such {\em narrated instructional videos} from our dataset. This results in the total of 140 videos that are 3 minutes long in average. 
+We extract the narration in the form of subtitles associated with the video. 
+These subtitles have been directly downloaded from YouTube and have been obtained either by Youtube's Automatic Speech Recognition (ASR) or provided by the users.%
+
+We use the resulting text to retrieve clip candidates that may contain the action modifying the state of an object. 
+Obtaining the approximate temporal location of actions from the transcribed narration is still very challenging due to ambiguities in language (``undo bolt" and ``loosen nut" refer to the same manipulation) and only coarse temporal localization of the action provided by the narration. %
+%
+%
+Given a manipulation action such as ``remove tire", we first find positive and negative sentences relevant for the action from an instruction website such as Wikihow.
+We then train a linear SVM classifier~\cite{cortes95SVM} on bigram text features. 
+Finally, we use the learned classifier to score clips from the input instructional videos.
+In detail, the classifier is applied in a sliding window of 10 words finding the best scoring window in each input video. The clip candidates are then obtained by trimming the input videos 5 seconds before and 15 seconds after the timing of the best scoring text window to account for the fact that people usually perform the action after having talked about it.
+We apply our method on the top 20 video clips based on the SVM score for each manipulation action.
+More details about this process are provided in Appendix~\ref{app:svm}.
+%
+%
+%
+%
+
+%
+%
+%
+%
+%
+
+\noindent\textbf{Results.}
+As shown in Table~\ref{tab:weakres}, the pattern of results, where our joint method performs the best, is similar to the weakly supervised set-up described in Sec.~\ref{sec:exp_res}. This highlights the robustness of our model to noisy input data -- an important property for scaling-up the method to Internet scale datasets.
+To assess how well our joint method could do with perfect retrieval,  
+we also report results for a ``Curated" set-up where we replace the automatically retrieved clips with the 20s clips used in Sec.~\ref{sec:exp_res} for the corresponding videos. 
+%
+%
+%
+%
+%
+
+
+
+\begin{table}[t!]
+	\centering
+	\resizebox{\columnwidth}{!}{
+		\begin{tabular}{@{}clccccc|r@{}}
+			\noalign{\hrule height 1.3pt}
+			\multicolumn{1}{l}{}                                                               & \multicolumn{1}{c}{\textbf{Method}} & \begin{tabular}[c]{@{}c@{}}put \\ wheel\end{tabular} & \begin{tabular}[c]{@{}c@{}}remove\\ wheel\end{tabular} & \begin{tabular}[c]{@{}c@{}}fill \\ pot\end{tabular} & \begin{tabular}[c]{@{}c@{}}open \\ oyster\end{tabular} & \begin{tabular}[c]{@{}c@{}}fill\\ coff.cup\end{tabular} & \multicolumn{1}{c}{\textbf{Ave.}} \\ \midrule
+			\multirow{4}{*}{\textbf{\begin{tabular}[c]{@{}c@{}}State \\ disc.\end{tabular}}}   & \textbf{(c)} Cstrs only                              & 0.23                                                & 0.34                                                  & 0.25                                               & 0.29                                                   & 0.11                                                    & 0.24                              \\
+			& State + det. sc.                         & 0.33                                                 & 0.48                                                  & \textbf{0.28}                                       &  0.40                                         & 0.13                                                    & 0.32                              \\
+			& \textbf{(g)} Joint                               & \textbf{0.38}                                        & \textbf{0.53}                                          & 0.25                                       & \textbf{0.43 }                                                  & \textbf{0.20}                                           & \textbf{0.36}                     \\ \cmidrule(l){2-8} 
+			& \textbf{(g)} Curated                             & 0.63                                                & 0.68                                                   & 0.63                                                & 0.63                                                   & 0.53                                                    & 0.62                             \\ \noalign{\hrule height 1pt}
+			\multirow{4}{*}{\textbf{\begin{tabular}[c]{@{}c@{}}Action \\ local.\end{tabular}}} & \textbf{(i)} Chance                              & 0.14                                                 & 0.10                                                   & 0.06                                                & 0.10                                                   & 0.15                                                    & 0.11                             \\
+			& \textbf{(iii)} Action                         & 0.05                                                & 0.10                                                   & 0.00                                                & 0.15                                          & \textbf{0.25}                                                    & 0.11                              \\
+			& (\textbf{iv}) Joint                               & \textbf{0.30}                                        & \textbf{0.30}                                          & \textbf{0.20}                                       & \textbf{0.20}                                                   & 0.20                                           & \textbf{0.24}                              \\ \cmidrule(l){2-8} 
+			& (\textbf{iv}) Curated                             & 0.53                                                 & 0.35                                                   & 0.32                                                & 0.40                                                   & 0.59                                                    & 0.44                              \\ \noalign{\hrule height 1.3pt}
+		\end{tabular}
+	}
+	\vspace*{-2mm}
+	\caption{\small Results on noisy clips automatically retrieved by text. \label{tab:weakres}}
+	\vspace{-4mm}
+\end{table}
+
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+

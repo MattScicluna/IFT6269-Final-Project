@@ -1,0 +1,70 @@
+\section{Bounding the Sub-optimality for Fixed $\shrinkAmount$ \label{sec:theory_fixed_eps} Variant}
+The pseudocode for optimizing over~$\DOMeps$ for a fixed~$\shrinkAmount$ is given in Algorithm~\ref{alg:adaptive_eps} (by ignoring the step~10 which updates $\shrinkAmount$).
+It is stated with a stopping criterion $\stopCrit$, but it can alternatively
+be run for a fixed number of $K$ iterations.
+The following theorem bounds the suboptimality of the iterates with respect to the 
+true optimum $\x^*$ over $\DOM$. If one can compute the constants in the theorem,
+one can choose a target contraction amount $\shrinkAmount$ to guarantee
+a specific suboptimality of $\stopCrit'$; otherwise, one can choose $\shrinkAmount$
+using heuristics. Note that unlike the adaptive-$\shrinkAmount$ variant, this algorithm
+does not converge to the true solution as $K \rightarrow \infty$ unless $\x^*$ happens
+to belong to $\DOMeps$. But the error can be controlled by choosing $\shrinkAmount$ small enough.
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+\begin{theorem}[Suboptimality bound for fixed-$\shrinkAmount$ algorithm]
+  \label{thm:convergence_fixed_eps}
+  Let $f$ satisfy the properties in Problem~\ref{prop:generic_fxn} and suppose its gradient is Lipschitz continuous on the contractions $\DOMeps$ as in Property~\ref{prop:prop_bounded_grad}. Suppose further that $f$ is finite on the boundary of $\DOM$. 
+  
+  Then $f$ is uniformly continuous on $\DOM$ and has a \emph{modulus of continuity} function $\modContinuity$ quantifying its level of continuity, i.e. 
+  $|f(\x) - f(\x')| \leq \modContinuity(\|\x - \x'\|) \,\, \forall \x, \x' \in \DOM$, with $\modContinuity(\sigma) \downarrow 0$ as $\sigma \downarrow 0$.
+  
+  Let $\x^*$ be an optimal point of $f$ over $\DOM$. The iterates $\xk \in \DOMeps$ of the FCFW algorithm as described in Algorithm~\ref{alg:adaptive_eps} for a fixed $\shrinkAmount > 0$ has sub-optimality over~$\DOM$ bounded as:
+	\begin{equation} \label{eq:rate_fixed_delta}
+	f(\xk) - f(\x^*) \leq \frac{2\mathcal{C}_{\shrinkAmount}}{(k+2)}+\modContinuity \left( \shrinkAmount \diam(\DOM)\right), 
+	\end{equation}
+	 where $C_{\shrinkAmount} \leq \diam(\DOMeps)^2 L_{\shrinkAmount}$. Note that different norms can be used in the definition of $\modContinuity(\cdot)$ and $C_\shrinkAmount$.
+\end{theorem}
+\begin{proof}
+Let $\xopteps$ be an optimal point of $f$ over $\DOMeps$. As $f$ has a Lipschitz continuous gradient over $\DOMeps$, we can use any standard convergence result of the Frank-Wolfe algorithm to bound the suboptimality of the iterate $\xk$ over $\DOMeps$. Algorithm~\ref{alg:adaptive_eps} (with a fixed~$\shrinkAmount$) describes the FCFW algorithm which guarantees at least as much progress as the standard FW algorithm (by step~15 and~20a), and thus we can use the convergence result from~\citet{jaggi2013revisiting} as
+already stated in~\eqref{eqn:fw_theorem_convergence_original}: $f(\xk)-f(\xopteps) \leq \frac{2C_{\shrinkAmount}}{(k+2)}$ with $C_{\shrinkAmount} \leq \diam(\DOMeps)^2 L_{\shrinkAmount}$, where $L_{\shrinkAmount}$ comes from Property~\ref{prop:prop_bounded_grad}. This gives the first term in~\eqref{eq:rate_fixed_delta}. Note that if the function $f$ is \emph{strongly} convex, then the FCFW algorithm has also a linear convergence rate~\citep{lacoste2015MFW}, though we do not cover this here.
+
+We now need to bound the difference $f(\xopteps) - f(\xopt)$ coming from the fact that we are not optimizing
+over the full domain, and giving the second term in~\eqref{eq:rate_fixed_delta}. We let $\xoptshift$ be the contraction of $\xopt$ on $\DOMeps$ towards $\unif$, i.e.
+$\xoptshift := (1-\shrinkAmount) \xopt + \shrinkAmount \unif$.\footnote{Note that without a strong convexity assumption on $f$, the optimum over $\DOMeps$, $\xopteps$, could be quite far from the optimum over $\DOM$, $\xopt$, which is why we need to construct this alternative close point to $\xopt$.} Note that $\| \xoptshift - \xopt \| = \delta \| \xopt - \unif \| \leq  \delta \diam(\DOM)$, and thus can be made arbitrarily small by letting $\shrinkAmount \downarrow 0$. Because $\xoptshift \in \DOMeps$, we have that $f(\xoptshift) \geq f(\xopteps)$ as $\xopteps$ is optimal over~$\DOMeps$.
+Thus $f(\xopteps) - f(\xopt) \leq f(\xoptshift) - f(\xopt) \leq \modContinuity(\| \xoptshift - \xopt\|)$ by the uniform continuity of~$f$ (that we explain below). Since~$\modContinuity$ is an increasing function, we have $\modContinuity(\| \xoptshift - \xopt\|) \leq \modContinuity(\delta \diam(\DOM))$, giving us the control on the second term of~\eqref{eq:rate_fixed_delta}. See Figure~\ref{fig:fixed_eps_diagram} for an illustration of the four points considered in this proof.
+
+Finally, we explain why $f$ is uniformly continuous. As $f$ is a (lower semi-continuous) convex function, it is continuous at every point where it is finite. As $f$ is said to be finite at its boundary (and it is obviously finite in the relative interior of $\DOM$ as it is continuously differentiable there), then $f$ is continuous over the whole of $\DOM$. As $\DOM$ is compact, this means that $f$ is also uniformly continuous over $\DOM$.
+\end{proof}
+
+\begin{figure} 
+\centering
+\includegraphics[width=.5\textwidth]{./images/theory/fixed_eps_diagram.pdf}
+\vspace{-2mm}
+\caption{Illustration of the four points considered for the error analysis of the fixed-$\shrinkAmount$ variant}
+\label{fig:fixed_eps_diagram}
+\vspace{-3mm}
+\end{figure}
+
+We note that the modulus of continuity function $\modContinuity$ quantifies the level of continuity of $f$. For a Lipschitz continuous function, we have $\modContinuity(\sigma) \leq L \sigma$. If instead we have $\modContinuity(\sigma) \leq C \sigma^\alpha$ for some $\alpha \in [0,1]$, then $f$ is actually $\alpha$-H\"{o}lder continuous. We will see in Section~\ref{sec:trw_weak_lip} that the TRW objective is not Lipschitz continuous, but it is  $\alpha$-H\"{o}lder continuous for any $\alpha < 1$, and so is ``almost'' Lipschitz continuous. From the theorem, we see that to get an accuracy of the order $\stopCrit$, we would need $(\shrinkAmount \diam(\DOM))^\alpha < \stopCrit$, and thus a contraction of $\shrinkAmount < \frac{\stopCrit^{(1/\alpha)}}{\diam(\DOM)}$.

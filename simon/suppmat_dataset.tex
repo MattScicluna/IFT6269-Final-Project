@@ -1,0 +1,23 @@
+\section{Dataset of manipulated objects}
+\label{app:dataset}
+
+Table~\ref{tab:datasetstatistics} provides statistics for the dataset introduced in Section~\ref{sec:dataset} of the main paper.
+For each object class we indicate associated action classes and the number of video clips for each action.
+We also provide the list of states and the number of object tracklets with state annotations.
+In total, we have around 20,000 annotated tracks which we use for the quantitative evaluation of state discovery.
+
+\begin{table}[h!]
+\centering
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{@{}llll@{}}
+\toprule
+Objects    & \textbf{Actions} (\#clips)                     & \textit{States}                & \#Tracklets \\ \midrule
+wheel      & \{\textbf{remove} (47),  \textbf{put} (46)\} & \textit{\{attached, detached\}} & 5447        \\
+coffee cup & \{\textbf{fill} (57)\}                         & \textit{\{full, empty\}}        &  1819           \\
+flower pot & \{\textbf{put plant} (27)\}                    & \textit{\{full, empty\}}        & 2463        \\
+fridge     & \{\textbf{open} (234), \textbf{close} (191)\}   & \textit{\{open, closed\}}      & 7968        \\
+oyster     & \{\textbf{open} (28)\}                              & \textit{\{open, closed\}}       & 1802        \\ \bottomrule
+\end{tabular}
+}
+\caption{Statistics of our new dataset of manipulated objects \label{tab:datasetstatistics}}
+\end{table}

@@ -1,0 +1,110 @@
+\vspace*{-3mm}
+\section{Introduction}
+\label{sec:intro}
+
+Many of our activities involve changes in object states.
+We need to open a book to read it, to cut bread before eating it and to lighten candles before taking out a birthday cake.
+Transitions of object states are often coupled with particular manipulation actions (open, cut, lighten).
+Moreover, the success of an action is often signified by reaching the desired state of an object (whipped cream, ironed shirt) and avoiding other states (burned shirt).
+Recognizing object states and manipulation actions is, hence, expected to become a key component of future systems such as wearable automatic assistants or home robots helping people in their daily tasks. 
+
+
+Human visual system can easily distinguish different states of objects, such as open/closed bottle or full/empty coffee cup~\cite{Brady06}.
+%
+%
+%
+Automatic recognition of object states and state changes, however, presents challenges as it requires distinguishing subtle changes in object appearance such as the presence of a cap on the bottle or screws on the car tire. %
+Despite much work on object recognition and localization, recognition of object states has received only limited attention in computer vision~\cite{Isola15State}.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{figs/teaser_new.pdf}
+    %
+    \caption{We automatically discover object states such as empty/full coffee cup along with their corresponding manipulation actions by observing people interacting with the objects.}
+    \label{fig:teaser}
+    \vspace*{-5mm}
+\end{figure}
+
+One solution to recognizing object states would be to manually annotate states for different objects,
+%
+and treat the problem as a supervised fine-grained object classification task~\cite{duan2012discovering,Farhadi09ObjectsAttrib}. This approach, however, presents two problems. First, we would have to decide {\em a priori} on the set of state labels for each object, which can be ambiguous and not suitable for future tasks. Second, for each label we would need to collect a large number of examples, which can be very costly.
+
+In this paper we propose to {\em discover} object states directly from videos with object manipulations.
+As state changes are often caused by specific actions, we attempt to jointly discover object states and corresponding manipulations.
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+In our setup we assume that two distinct object states are temporally separated by a manipulation action.
+For example, the empty and full states of a coffee cup are separated by the ``pouring coffee" action, as shown in Figure~\ref{fig:teaser}.  
+Equipped with this constraint, %
+we develop a clustering approach that jointly (i)~groups object states with similar appearance and consistent temporal locations with respect to the action and (ii) finds similar manipulation actions separating those object states in the input videos.
+Our approach exploits the complementarity of both subproblems and finds a joint solution for states and actions.
+%
+%
+We formulate our problem by adopting a discriminative clustering loss~\cite{Bach07diffrac} and a joint consistency cost between states and actions.  
+We introduce an effective optimization solution in order to handle the resulting non-convex loss function and the set of spatial-temporal constraints.
+To evaluate our method, we collect a new video dataset depicting real-life object manipulation actions in realistic videos.
+Given this dataset for training, our method demonstrates successful discovery of object states and manipulation actions.
+We also demonstrate that our joint formulation gives an improvement of object state discovery by action recognition and vice versa.
+
+
+\section{Related work}
+\label{sec:rel_work}
+
+Below we review related work on person-object interaction, recognizing object states, action recognition and discriminative clustering that we employ in our model. 
+
+\noindent\textbf{Person-object interactions.}
+Many daily activities involve person-object interactions. %
+Modeling co-occurrences of objects and actions have shown benefits for recognizing actions in~\cite{delaitre11personaction,gupta2009observing,kjellstrom2011visual,pirsiavash2012detecting,yao2011human}.
+Recent work has also focused on building realistic datasets with people manipulating objects, \eg~in instructional videos~\cite{Alayrac15Unsupervised,Malmaud15what,Sener15unsupervised} or while performing daily activities~\cite{varol16hollywood}.
+We build on this work but focus on joint modeling and recognition of actions and {\em object states}.
+
+\noindent\textbf{States of objects.}
+Prior work has addressed recognition of object attributes~\cite{Farhadi09ObjectsAttrib,Parikh2011Relattrib,patterson2014sun}, which can be seen as different object states in some cases. 
+%
+%
+Differently from our approach, these works typically focus on classifying still images, do not consider human actions and assume an {\em a priori} known list of possible attributes. %
+Closer to our setting, Isola~\etal\cite{Isola15State} discover object states and transformations between them by analyzing large collections of still images downloaded from the Internet. 
+In contrast, our method does not require annotations of object states. %
+Instead, we use the dynamics of consistent manipulations to discover object states in the video with minimal supervision. %
+In~\cite{dima2014youdo}, the authors use consistent manipulations to discover task relevant objects.
+However, they do not consider object states, rely mostly on first person cues (such as gaze) and take advantage of the fact that videos are taken in a single controlled environment.
+
+
+\noindent\textbf{Action recognition.}
+Most of the prior work on action recognition has focused on designing features to describe time intervals of a video using motion and appearance~\cite{laptev08learning,simonyan2014two,tran2015learning,Wang13action}. This is effective for actions  such as \textit{dancing} or \textit{jumping},
+%
+however, many of our daily activities are best distinguishable by their effect on the environment.
+For example, \textit{opening door}  and \textit{closing door} can look very similar using only motion and appearance descriptors but their outcome is completely different.
+This observation has been used to design action models in~\cite{fathi11modeling,fernando15vidDarwin,Wang16Transformation}.
+In~\cite{Wang16Transformation}, for example, the authors propose to learn an embedding in which a given action acts as a transformation of  features of the video.
+In our work we localize objects and recognize  changes of their states using manipulation actions as a supervisory signal.
+Related to ours is also the work of Fathi~\etal~\cite{fathi11modeling} who represent actions in egocentric videos by changes of appearance of objects (also called object states), however, their method requires manually annotated precise temporal localization of actions in training videos. 
+In contrast, we focus on (non-egocentric) Internet videos depicting real-life object manipulations where actions are performed by different people in a variety of challenging indoor/outdoor environments. In addition, our model jointly learns to recognize both actions and object states with only minimal supervision.
+
+\noindent\textbf{Discriminative clustering.}
+Our model builds on unsupervised discriminative clustering methods~\cite{Bach07diffrac,singh12discPat,Xu2004maximum} that group data samples according to a simultaneously learned classifier. 
+Such methods can incorporate (weak) supervision that helps to steer the clustering towards a preferred solution~\cite{Bojanowski13finding,doersch2012what,feifei2016connectionist,jain2013representing,tang14coloc}.
+In particular, we build on the discriminative clustering approach of~\cite{Bach07diffrac} that has been shown to perform well in a variety of computer vision problems~\cite{Bojanowski13finding}. %
+It leads to a quadratic optimization problem where different forms of supervision can be  incorporated in the form of (typically) linear constraints.
+Building on this formalism, we develop a model that jointly finds object states and temporal locations of actions in the video.
+Part of our object state model is related to~\cite{Joulin14efficient}, while our action model is related to~\cite{Bojanowski15weakly}.
+However, we introduce new spatial-temporal constraints together with a novel joint cost function linking object states and actions, as well as new effective optimization techniques.  
+
+
+\noindent\textbf{Contributions.}
+\label{sec:contrib}
+The contributions of this work are three-fold. 
+First, we develop a new discriminative clustering model that jointly discovers object states and temporally localizes associated manipulation actions in video. 
+Second, we introduce an effective optimization algorithm to handle the resulting non-convex constrained optimization problem. 
+Finally, we experimentally demonstrate that our model discovers key object states and manipulation actions from input videos with minimal supervision.
+

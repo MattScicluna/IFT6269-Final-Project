@@ -1,0 +1,356 @@
+\documentclass{article}
+\pdfoutput=1
+\usepackage{nips15submit_e, times}
+\usepackage{graphicx} %
+\usepackage[center]{subfigure} 
+\usepackage[round]{natbib}
+\usepackage{multibib}
+%
+%
+\usepackage{algorithmic}
+\usepackage[ruled]{algorithm2e}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\algsetup{linenosize=\small}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage{cancel}
+\usepackage{amsmath,amsfonts} %
+\usepackage[bookmarks=false]{hyperref}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{tikz-qtree}
+\usepackage{listings}
+\usepackage{bbm}
+\usepackage{mathtools}
+\usepackage{breqn}
+\usepackage{todonotes}
+\usepackage{rotating}
+\usepackage{ amssymb }
+\usepackage{booktabs}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{mathdots}
+\newcites{sup}{Supplementary References}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\newcommand{\Hc}{\bar{H}}
+\newcommand{\etal}{et. al}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\brangle{\langle}{\rangle}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{properties}[theorem]{Property}
+\newtheorem{problem}[theorem]{Problem}
+%
+%
+%
+%
+%
+%
+%
+%
+
+%
+\hypersetup{
+  plainpages=false,
+  %
+  colorlinks=true,   %
+  linkcolor=blue,    %
+  anchorcolor=blue,  %
+  citecolor=blue,    %
+  filecolor=blue,    %
+  pagecolor=blue,    %
+  urlcolor=blue,     %
+  pdfview=FitH,               %
+  pdfstartview=FitH,          %
+  pdfpagelayout=SinglePage    %
+}
+
+
+%
+
+%
+\let\oldnl\nl%
+\newcommand{\nonl}{\renewcommand{\nl}{\let\nl\oldnl}}%
+
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\shrinkAmount}{\delta}
+%
+%
+\DeclareMathOperator{\st}{\textrm{s.t.}}
+\DeclareMathOperator*{\conv}{conv}
+\DeclareMathOperator{\diam}{diam}
+\DeclareMathOperator*{\E}{\rm E}
+\DeclareMathOperator*{\argmin}{\arg\min}
+\DeclareMathOperator*{\argmax}{\arg\max}
+\DeclareMathOperator{\lmax}{\lambda_{\max}}
+\DeclareMathOperator{\lmin}{\lambda_{\min}}
+\DeclareMathOperator*{\supp}{supp}
+\DeclareMathOperator*{\diag}{diag}
+\DeclareMathOperator*{\sign}{sign}
+\DeclareMathOperator*{\tr}{Tr}
+\DeclareMathOperator*{\rk}{Rk}
+\DeclareMathOperator*{\card}{card}
+\DeclareMathOperator*{\relint}{\mathop{relint}}
+
+%
+\providecommand{\abs}[1]{\left\lvert#1\right\rvert}
+\providecommand{\norm}[1]{\left\lVert#1\right\rVert}
+\providecommand{\dualnorm}[1]{\norm{#1}_*}
+\providecommand{\frobnorm}[1]{\norm{#1}_{Fro}}
+\providecommand{\tracenorm}[1]{\norm{#1}_{tr}}
+\providecommand{\opnorm}[1]{\norm{#1}_{op}}
+\providecommand{\maxnorm}[1]{\norm{#1}_{\max}}
+\providecommand{\latGrNorm}[1]{\norm{#1}_{\groups}}
+
+\newcommand{\ball}{\mathcal{B}}
+%
+
+\newcommand{\bigO}{O}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Sym}{\mathbb{S}}
+
+%
+\newcommand{\domain}{\mathcal{D}}
+\newcommand{\stepsize}{\gamma}
+%\newcommand{\stepmax}{\gamma\textnormal{\scriptsize max}} %
+\newcommand{\stepmax}{{\stepsize}_{\mathrm{max}}}
+\newcommand{\stepbound}{\gamma^\textnormal{\scriptsize B}} %
+\newcommand{\FW}{{\hspace{0.05em}\textnormal{FW}}}
+\newcommand{\pFW}{{\hspace{0.05em}\textnormal{pFW}}}
+\newcommand{\away}{{\hspace{0.06em}\textnormal{\scriptsize A}}}
+\newcommand{\Cf}{C_{\hspace{-0.08em}f}}
+\newcommand{\CfA}{C_{\hspace{-0.08em}f}^-}
+\newcommand{\CfMFW}{C_{\hspace{-0.08em}f}^\away}
+\newcommand{\strongConvFW}{\mu_{\hspace{-0.08em}f}^\FW}
+\newcommand{\strongConvMFW}{\mu_{\hspace{-0.08em}f}^\away}
+\newcommand{\distToBoundary}{{\Delta_{\x^*\!,\domain}}}
+\newcommand{\dirW}{\mathop{dirW}}
+\newcommand{\x}{\bm{x}}
+\newcommand{\y}{\bm{y}}
+\newcommand{\z}{\bm{z}}
+\newcommand{\s}{\bm{s}}
+\newcommand{\dd}{\bm{d}}
+\newcommand{\uu}{\bm{u}}
+\newcommand{\vv}{\bm{v}} %
+\newcommand{\atoms}{\mathcal A}
+\newcommand{\groups}{\mathcal G}
+\newcommand{\row}{\text{row}}
+\newcommand{\col}{\text{col}}
+\newcommand{\lft}{\text{left}}
+\newcommand{\rgt}{\text{right}}
+\newcommand{\mapprox}{\nu} %
+\newcommand{\CfTotal}{C_f^{\text{\tiny{prod}}}}
+
+%
+\newcommand{\Vertices}{\mathcal{V}}
+\newcommand{\Coreset}{\mathcal{S}}
+\renewcommand{\S}{\mathcal{S}}
+\renewcommand{\aa}{\bm{\alpha}}
+\renewcommand{\r}{\bm{r}}
+\newcommand{\PdirW}{\mathop{PdirW}}
+\newcommand{\innerProd}[2]{\left\langle #1 , #2 \right\rangle}
+\newcommand{\C}{\mathcal{C}}
+\newcommand{\proj}{\bm{P}}
+\newcommand{\K}{\bm{K}}
+\newcommand{\Kface}{\mathcal{K}}
+
+\newcommand{\LOCAL}{\mathbb{L}} %
+\newcommand{\MARG}{\mathcal{M}} %
+\newcommand{\VAL}{\textrm{VAL}}
+\newcommand{\Rregion}{\mathcal{R}}
+\newcommand{\Bregion}{\mathcal{B}}
+
+\newcommand{\nn}{\bm{n}} %
+\newcommand{\smallMax}{{\textnormal{\scriptsize max}}}
+
+%
+
+
+%
+\newcommand{\xk}{\bm{x}^{(k)}}
+\newcommand{\xnext}{\bm{x}^{(k+1)}}
+
+\newcommand{\dk}{\bm{d}^{(k)}}
+\newcommand{\sk}{\bm{s}^{(k)}}
+\newcommand{\snext}{\bm{s}^{(k+1)}}
+\newcommand{\aak}{\bm{\alpha}^{(k)}}
+
+\newcommand{\Cconst}{\widetilde{C}}
+\newcommand{\Cconstk}{\widetilde{C}_{\hspace{-0.08em}(k)}}
+
+\newcommand{\fk}{f(\bm{x}^{(k)})}
+\newcommand{\fnext}{f(\bm{x}^{(k+1)})}
+
+\newcommand{\hk}{h_k}
+\newcommand{\hkarg}[1]{h_{#1}} %
+\newcommand{\hnext}{h_{k+1}}
+\newcommand{\hprev}{h_{k-1}}
+\newcommand{\gk}{g(\bm{x}^{(k)})}
+\newcommand{\raiseto}[3]{\left(#1\right)^{\frac{#2}{#3}}}
+\newcommand{\gam}[1]{\gamma_{(#1)}}
+\newcommand{\tgam}[1]{\tilde{\gamma}_{(#1)}}
+\newcommand{\textprf}[1]{\left[\text{#1}\right]}
+\newcommand{\DOM}{\mathcal{D}}
+\newcommand{\xopt}{\bm{x}^{*}}
+\newcommand{\TREEPOL}{\mathbb{T}} %
+\newcommand{\errlogz}{\zeta_{\log Z}}
+\newcommand{\errmu}{\zeta_{\mu}}
+
+\newcommand{\modContinuity}{\omega} %
+
+%
+\newcommand{\unif}{\bm{u}_0} %
+\newcommand{\gunif}{g_u(\bm{x}^{(k)})} %
+\newcommand{\gunifNox}{g_u} %
+\newcommand{\geps}{g_{(\shrinkAmount)}(\bm{x}^{(k)})}
+\newcommand{\gepsk}[1]{g_{(\shrinkAmount^{(#1)})}(\bm{x}^{(k)})}
+\newcommand{\Meps}{\mathcal{M}_{\shrinkAmount}}
+\newcommand{\DOMeps}{\mathcal{D}_{\shrinkAmount}}
+\newcommand{\dkeps}{\bm{d}^{(k)}_{(\shrinkAmount)}}
+\newcommand{\skeps}{\bm{s}^{(k)}_{(\shrinkAmount)}}
+\newcommand{\hkeps}{h^{\shrinkAmount}(\bm{x}^{(k)})}
+\newcommand{\xkfinal}{\bm{x}^{(final)}_{\shrinkAmount}}
+\newcommand{\xopteps}{\bm{x}^{*}_{(\shrinkAmount)}}
+\newcommand{\xoptshift}{\tilde{\bm{x}}_{(\shrinkAmount)}}
+\newcommand{\vveps}{\bm{v}_{(\shrinkAmount)}}
+\newcommand{\epsk}[1]{\shrinkAmount^{(#1)}}
+\newcommand{\del}{\mathrm{\bm{d}}}
+\newcommand{\h}{h}
+\newcommand{\vrho}{\bm{\rho}}
+\newcommand{\vmu}{\vec{\bm{\mu}}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\edges}{\{i,j\}\in E}
+\newcommand{\nodes}{i\in V}
+\newcommand{\vtheta}{\vec{\bm{\theta}}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\valpha}{\vec{\bm{\alpha}}}
+\newcommand{\trwent}{H(\vec{\bm{\mu}};\vrho)}
+\newcommand{\LOCALSEARCH}{\textbf{\textrm{LOCALSEARCH}}}
+\newcommand{\CORRECTION}{\textbf{\textrm{CORRECTION}}}
+\newcommand{\MIfunction}{\textbf{\textrm{edgesMI}}}
+\newcommand{\MAXITS}{\textbf{\textrm{MAXITS}}}
+\newcommand{\MAXRHOITS}{\textbf{\textrm{MAX$\_$RHO$\_$ITS}}}
+\newcommand{\TRW}{\text{TRW}(\vmu;\vtheta,\vrho)}
+\newcommand{\algComment}[1]{\quad\emph{\small{(#1)}}}
+\newcommand{\nbrs}[1]{\mathcal{N}(#1)}
+\newcommand{\gunifBound}{B}
+\newcommand{\stopCrit}{\epsilon}
+
+
+\title{Barrier Frank-Wolfe for Marginal Inference}
+
+\author{
+Rahul G. Krishnan \\
+Courant Institute\\
+New York University\\
+%
+\And
+Simon Lacoste-Julien \\ 
+INRIA - Sierra Project-Team\\
+\'{E}cole Normale Sup\'{e}rieure, Paris
+%
+\And
+David Sontag\\
+Courant Institute\\
+New York University\\
+%
+}
+
+%
+%
+%
+%
+%
+%
+%
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+\newcommand{\note}[1]{{\textbf{\color{red}#1}}}
+
+\nipsfinalcopy %
+
+\begin{document}
+\maketitle
+
+\begin{abstract} 
+We introduce a globally-convergent algorithm for optimizing the
+tree-reweighted (TRW) variational objective over the marginal
+polytope.
+The algorithm is based on the conditional gradient method (Frank-Wolfe) 
+and moves pseudomarginals within the marginal
+polytope through repeated maximum a posteriori (MAP) calls.
+%
+This modular structure enables us 
+to leverage black-box MAP solvers (both exact and approximate) for
+variational inference, and obtains more accurate results than
+tree-reweighted algorithms that optimize over the local consistency
+relaxation.
+%
+Theoretically, we bound the sub-optimality for the proposed algorithm
+despite the TRW objective having unbounded gradients at the boundary of the marginal polytope. 
+%
+Empirically, we demonstrate the increased quality of results found  
+by tightening the relaxation over the marginal polytope as well 
+as the spanning tree polytope on synthetic and real-world instances. 
+\end{abstract} 
+\input{introduction.tex}
+\input{background.tex}
+\input{theory.tex}
+\input{algorithm.tex}
+\input{experiments.tex}
+\input{discussion.tex}
+\vspace{-2mm}
+\section*{Acknowledgements}
+\vspace{-2mm}
+%
+%
+%
+%
+%
+%
+%
+%
+RK and DS gratefully acknowledge the support of the Defense Advanced
+Research Projects Agency (DARPA) Probabilistic Programming for
+Advancing Machine Learning (PPAML) Program under Air Force Research
+Laboratory (AFRL) prime contract no. FA8750-14-C-0005. Any opinions,
+findings, and conclusions or recommendations expressed in this
+material are those of the author(s) and do not necessarily reflect the
+view of DARPA, AFRL, or the US government.
+%
+\bibliographystyle{abbrvnat}
+%
+\small{
+\bibliography{ref}
+}
+
+%
+%
+%
+%
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+\clearpage %
+\input{supplement}
+\end{document}

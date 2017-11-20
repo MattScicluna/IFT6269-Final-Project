@@ -1,0 +1,110 @@
+\section{Introduction}
+\vspace{-3mm}
+
+Markov random fields (MRFs) are used in many areas of computer science such as vision and speech. 
+Inference in these undirected graphical models is generally intractable. 
+Our work focuses on performing approximate marginal inference 
+%
+by optimizing the Tree Re-Weighted (TRW)
+objective \citep{wainwright2005new}. 
+The TRW objective is concave, is exact for tree-structured MRFs, 
+and provides an upper bound on the log-partition function. 
+
+Fast combinatorial solvers for the TRW objective exist, including Tree-Reweighted 
+Belief Propagation (TRBP) \citep{wainwright2005new}, convergent
+message-passing based on geometric programming
+\citep{globerson2012convergent}, and dual decomposition
+\citep{Jancsary11}. These methods optimize over the set
+of pairwise consistency constraints, also called the local polytope. \citet{sontag2007new} showed that significantly better 
+results could be obtained by optimizing over tighter relaxations of the marginal 
+polytope. However, deriving a message-passing algorithm for the TRW objective over tighter relaxations of the marginal polytope
+is challenging. Instead, \citet{sontag2007new} use the
+conditional gradient method (also called Frank-Wolfe) and
+off-the-shelf linear programming solvers to optimize TRW over the cycle
+consistency relaxation.
+Rather than optimizing over the cycle relaxation,
+\citet{belangerWorkshop2013} optimize the TRW objective over
+the exact marginal polytope. Then,
+using Frank-Wolfe, the linear minimization performed in
+the inner loop can be shown to correspond to MAP inference. 
+
+%
+%
+%
+%
+
+%
+%
+%
+%
+%
+%
+%
+%
+%
+
+The Frank-Wolfe optimization algorithm has seen increasing use in machine learning,
+thanks in part to its efficient handling of complex constraint sets appearing with structured data~\citep{jaggi2013revisiting,lacoste2015MFW}.
+However, applying Frank-Wolfe to
+variational inference presents challenges that were never
+resolved in previous work. 
+First, the linear minimization performed in the
+inner loop is computationally expensive, either requiring repeatedly solving a
+large linear program, as in \citet{sontag2007new}, or performing
+MAP inference, as in \citet{belangerWorkshop2013}.
+Second, the TRW objective involves entropy terms whose gradients go to
+infinity near the boundary of the feasible set, therefore
+existing convergence guarantees for Frank-Wolfe do not apply.
+Third, variational inference using TRW involves
+both an outer and inner loop of Frank-Wolfe, where the outer loop
+optimizes the edge appearance probabilities in the TRW entropy bound to tighten it. 
+Neither \citet{sontag2007new} nor \citet{belangerWorkshop2013} explore the effect of
+optimizing over the edge appearance probabilities. %
+%
+%
+
+%
+Although MAP inference is in general NP hard \citep{MAP_NP_Hard},
+it is often possible to find exact solutions to large real-world
+instances within reasonable running times 
+\citep{SontagEtAl_uai08, allouche2010toulbar2,kappes2013comparative}. 
+Moreover, as we show in our experiments, even approximate MAP solvers
+can be successfully used within our variational inference algorithm.
+As MAP solvers improve in their
+runtime and performance, their iterative use could become feasible and as a byproduct enable more efficient and accurate
+marginal inference. Our work provides a fast deterministic alternative to
+recently proposed Perturb-and-MAP algorithms
+\citep{papandreou2011perturb, hazan2012partition, ermonWISH}.
+
+\textbf{Contributions.} 
+This paper makes several theoretical and practical innovations. 
+%
+%
+We propose a modification to the Frank-Wolfe algorithm that 
+optimizes over adaptively chosen contractions of the domain and prove its 
+rate of convergence for functions
+whose gradients can be unbounded at the boundary.  
+Our algorithm does not require a different oracle than standard Frank-Wolfe and could be 
+%
+useful for other convex optimization problems where the gradient is ill-behaved at the boundary.
+
+We instantiate the algorithm for approximate marginal inference over the marginal polytope 
+with the TRW objective.
+With an exact MAP oracle, we obtain the first provably convergent algorithm 
+for the optimization of the TRW objective over the marginal polytope, 
+which had remained an open problem to the best of our knowledge.
+%
+%
+%
+%
+Traditional proof techniques of convergence for first order methods fail as the gradient of the TRW objective is not Lipschitz continuous. 
+
+We develop several heuristics to
+make the algorithm practical: a fully-corrective
+variant of Frank-Wolfe that reuses previously found integer
+assignments thereby reducing the need for new (approximate) MAP
+calls, the use of local search between MAP calls, 
+and significant re-use of computations between
+subsequent steps of optimizing over the spanning tree
+polytope.
+We perform an extensive experimental evaluation on both synthetic and real-world inference tasks. 

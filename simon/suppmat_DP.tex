@@ -1,0 +1,86 @@
+  \begin{figure*}[t!]
+  \begin{subfigure}{.44\textwidth}
+    \raggedleft
+    \includegraphics[width=\linewidth]{figs/DPgraph.pdf}
+    \caption{Non-overlap data structure for tracklets}
+    \label{fig:DPsub1}
+  \end{subfigure}
+  \hspace*{\fill}
+  \begin{subfigure}{0.53\textwidth}
+    \raggedright
+    \includegraphics[width=\linewidth]{figs/costmatrixpathDP.pdf}
+    \caption{Cost matrix $\tilde{C}_n$ for the dynamic program}
+    \label{fig:DPsub2}
+  \end{subfigure}
+  \caption{\small
+In \textbf{(a)}, we provide an illustration of a possible situation for the tracklets.
+ $y_0$ and $y_f$ are two fictitious tracklets that encode the beginning and end of the video.
+ Each tracklet is indexed based on its beginning time.
+ The time overlap between tracklets is shown by the grey color.
+ We specify for each tracklet its possible successors by the dotted red arrows (see main text).
+ Finally an admissible labeling is illustrated by yellow tags where $y_1$ and $y_5$ have both been assigned to state~$1$ and $y_6$ to state~$2$.
+In \textbf{(b)}, we give an illustration of our approach to solve~\eqref{eq:linearprogram} with a dynamic program.
+We display the modified cost matrix $\tilde{C}_n$ (see main text).
+A valid path has to go from the green dot ($y_0$) to the red dot ($y_f$).
+The light yellow entries show part of the $C_n$ matrix that are inserted in $\tilde{C}_n$, whereas white entries encode the rows of $0$s that are inserted to impose the \textbf{at least one} ordering constraint.
+The red arrows specify an example optimal path inside the matrix.
+The red entries display the tracklets that have been assigned to state~$1$ ($y_1$ and $y_5$) or state $2$ ($y_6$) (equivalent to putting ones in the appropriate corresponding entries in $Y_n$).
+Finally, the grey arrows display the possible valid transitions that can be made for the entries \emph{along the red path}, for clarity. We see for example that from $(2,y_1)$, there are $6$ possible transitions: two column choices from the two red arrows from $y_1$ in~(a) encoding the non-overlap constraint; and three row choices encoding the valid transition from ``state 1'' (corresponding to the choice ``state 1'', $0$ or ``state 2'' for the next tracklet) encoding the ``at least one'' ordering constraint.}
+  \label{fig:DP}
+\end{figure*}
+  
+
+\section{Dynamic program for the tracklets}
+\label{app:dp}
+The track constraints defined in Section~\ref{sec:statemodel} introduce new challenges compared to the previous related work~\cite{Alayrac15Unsupervised,Bojanowski14weakly,Joulin14efficient}.
+Recall that there are three main components in the constraints.
+First, we assume that only one object is manipulated at a given time. 
+Thus \emph{at most one} tracklet can be assigned to a state at a given time.
+This constraint is referred to as the \textbf{non-overlap constraint}.
+Second, we have the \textbf{ordering constraint} that imposes that \emph{state~1} always happens \emph{before} \emph{state~2}.
+The last constraint imposes that we have \textbf{at least one} tracklet labeled as \emph{state~1} and \emph{at least one} tracklet labeled as \emph{state~2}.
+We need to be able to minimize linear functions over this set of constraints in order to use the Frank-Wolfe algorithm.
+More precisely, as the constraints decompose over the different clips, we can solve independently for each clip $n$ the following linear problem:
+\begin{align}
+\label{eq:linearprogram}
+\underset{\substack{Y_n\in\{0,1\}^{M_n\times 2}}}{\text{minimize}}  & \phantom{aa:}\text{Tr}(C_n^TY_n) \\
+\text{ s.t. }   & \underbrace{Y_n \in \mathcal{Y}_n}_{\substack{\text{non-overlap + ordering}\\\text{+ at least one}}},   \nonumber
+\end{align}
+where $C_n\in\mathbb{R}^{M_n\times 2}$ is a cost matrix that typically comes from the computation of the gradient of the cost function at the current iterate.
+In order to solve this problem, we use a dynamic program approach that we explain next.
+Recall that we are given $M_n$ tracklets $(y_i)_{i=1}^{M_n}$ and our goal is to output the $Y_n$ matrix that assigns to each of these tracklets either state~$1$, state~$2$ or no state at all while respecting the constraints.
+The whole method is illustrated in Figure~\ref{fig:DP} with a toy example.
+
+\textbf{Non-overlap data structure for the tracklets.}
+We first pre-process the tracklets to build an auxiliary data-structure that is used to enforce the non-overlap constraint between the tracklets, as illustrated in Figure~\ref{fig:DPsub1}.
+First, we sort and index each tracklet by their beginning time, and add two fictitious tracklets: $y_0$ as the starting tracklet and $y_f$ as the ending tracklet.
+These two tracklets are used to start and terminate the dynamic program.
+If all the tracklets were sequentially ordered without any overlap in time, then we could simply make a decision for each of them sequentially as was done in previous work on action localization for example (one decision per time step)~\cite{Bojanowski14weakly}.
+To enforce the non-overlap constraint, we force the decision process to choose \emph{only one} possible successor among the group of overlapping valid immediate successors of a tracklet. For each tracklet $y_i$, we thus define its (smallest) set of ``\emph{valid successors}'' as the earliest tracklet $y_j$\footnote{Earliest means the smallest $j$.} after $y_i$ that is also non-overlapping with $y_i$, as well as any other tracklet $y_l$ for $l > j$ that is overlapping with $y_j$ (thus giving the earliest valid group of overlapping tracklets). The valid successors are illustrated by red dotted arrows in Figure~\ref{fig:DPsub1}. For example, the valid successors of~$y_1$ are $y_3$ (the earliest one that is non-overlapping) as well as $y_4$ (which overlaps with $y_3$ thus forming an overlapping group). Skipping a tracklet in this decision process means that we assign it to zero (which trivially always satisfies the non-overlapping constraint); whereas once we choose a tracklet to potentially assign it to state 1 or 2, we cannot visit any overlapping tracklet by construction of the valid successors, thus maintaining the non-overlap constraint.
+
+\textbf{Dynamic program.}
+The dynamic programming approach is used when we can solve a large problem by solving a sequence of inclusive subproblems that are linked by a simple recursive formula and that use overlapping solutions (which can be stored in a table for efficiency).
+In terms of implementation, \cite{Bojanowski14weakly} encoded their dynamic program as finding an optimal path inside a cost matrix.
+This approach is particularly suited when the update cost rule depends \emph{only} on the arrival entry in the cost matrix as opposed to be transition dependent.
+As we will show below, we can encode the solution to our problem in a way that satisfies this property.
+We therefore use the framework of~\cite{Bojanowski14weakly} by casting our problem as a search for an optimal path inside a cost matrix $\tilde{C}_n$ illustrated in Figure~\ref{fig:DPsub2}, and where the valid transitions encode the possible constraints.
+
+One main difference with~\cite{Bojanowski14weakly} is that we have to deal with the challenging \textbf{at least one} constraint in the context of ordered labels.
+To do so, we can filter further the set of valid decisions by using ``memory states'' that encode in which of the following three situations we are: \textbf{(i)} that state~$1$ has not yet been visited, \textbf{(ii)} that state~$1$ has already been visited, but state~$2$ has not yet been visited (and thus that we can either come back to state~$1$ or go to state~$2$) and \textbf{(iii)} that both states have been visited.
+These memory states can be encoded by interleaving complete rows of $0$s in between columns of $C_n$ stored as rows, to obtain the $5 \times M_n$ matrix~$\tilde{C}_n$.
+These new rows encode the three different memory states previously described when making a prediction of $0$ for a specific tracklet, and we enforce the correct memory semantic by only allowing a path to move to the same row or the row immediately below, except for state~$1$ which can also move directly to state~$2$ (two rows below), and the middle ``between state 1/2'' row, where one can go up one row additionally to state~$1$. Finally, the valid transitions between columns (tracklets) are given by the \emph{valid successors} data structure as given in Figure~\ref{fig:DPsub1} to encode the non-overlap constraints. Combining these two constraints (at least one ordering and non-overlap), we illustrate with grey arrows in Figure~\ref{fig:DPsub2} the possible transitions from the states along the path in red. To describe the dynamic program recursion below, we need to go the opposite direction from the successors, and thus we say that $y_j$ is a \emph{predecessor} of $y_i$ if and only if $y_i$ is a successor of $y_j$.
+
+To perform the dynamic program, we maintain a matrix $D_n$ of the same size as $\tilde{C}_n$ where
+$D_n(k,i)$ contains the minimal valid path cost of going from $(1,y_0)$ to $(k,y_i)$ inside the cost matrix $\tilde{C}_n$.
+To define the cost update recursion to compute $D_n(k,i)$, let $P(k,i)$ be the set of tuples $(l,j)$ for which it is possible to go from $(l,j)$ to $(k,y_i)$ according to the rules described above.  
+The update rule is then as follows:
+\begin{align}
+\label{eq:updateruleDP}
+D_n(k,i) = \min_{(l,j) \in P(k,i)} D_n(l,j)+\tilde{C}_n(k,y_i).
+\end{align}
+As we see here, the added cost depends \emph{only} on the arrival entry $\tilde{C}_n(k,y_i)$.
+We can therefore use the approach of~\cite{Bojanowski14weakly} and only consider entry costs rather than edge costs.
+Thanks to our indexing property (tracklets are sorted by the beginning time), we can update the dynamic program matrix by filling each column of $D_n$ one after the other.
+Once this update is finished, we back-track to get the best path by starting from the ending track (predecessors of $y_f$) at the last row (to be sure that both states have been visited) that has the lowest score in the $D_n$ matrix.
+The total complexity of this algorithm is of order $\mathcal{O}(M_n)$.
+

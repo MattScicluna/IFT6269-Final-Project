@@ -1,0 +1,53 @@
+\section{Joint cost rounding method}
+\label{app:jcr}
+
+Recall that we propose to use a convex relaxation approach in order to obtain a candidate solution of main problem~\eqref{eq:jointstateactionprob}.
+Thus, we need to \emph{round} the relaxed solution afterward in order to get a valid integer solution.
+We propose here a new rounding that is adapted to our joint problem.
+We referred to this rounding as the \textbf{joint cost rounding} (see Section~\ref{sec:optim} of main paper).
+This rounding is inspired by~\cite{Bojanowski15weakly,Alayrac15Unsupervised}.
+They observe that using the learned $W^*$ classifier to round gives them better solutions, both in terms of objective value and performance.
+We propose to use its natural extension for our joint model.
+We first fix the classifiers for actions $W_a$ and for states $W_s$ to their relaxed solution $(W_a^*, W_s^*)$ and find, for each clip $n$, the couple $(Z_n,Y_n)$ that minimizes the joint cost~\eqref{eq:jcrrounding}.
+To do so, we observe that we can enumerate all $T_n$ possibilities for $Z_n$, and solve for each of them the minimization of the joint cost with respect to $Y_n$.
+The minimization with respect to $Y_n$ can be addressed as follows.
+First, we observe that the distortion function~\eqref{eq:relaxeddist} is bilinear in $(Z_n,Y_n)$.
+Let $Z_n$ be a $T_n \times 1$ vector, and let $\mathbf{1}_2$ be a vector of ones of length 2.
+We can actually write: $d(Z_n,Y_n)=\text{Tr}(( B_n Z_n \mathbf{1}_2^\top)^\top Y_n)$ for some matrix $B_n\in\mathbb{R}^{M_n \times T_n}$.
+Thus, when $Z_n$ is fixed, the joint term $d(Z_n,Y_n)$ is actually a simple \emph{linear} function of $Y_n$.
+In addition, the quadratic term in $Y_n$ coming from~\eqref{eq:discr_state} is also \emph{linear} over the integer points (using the fact that $y^2=y$ for $y\in\{0,1\}$). 
+Thus, when $Z_n$, $W_a^*$ and $W_s^*$ are fixed, the minimization over $Y_n$ is a linear program~\eqref{eq:linearprogram} that we solve using our dynamic program from the previous section.
+The final algorithm is given in Algorithm~\ref{jcrAlgo}.
+Its complexity is of order $\mathcal{O}(T_nM_n)$.
+
+\definecolor{comment}{RGB}{86, 115, 154}
+\begin{algorithm}[t!]
+	\caption{Joint cost rounding for video $n$}
+	\label{jcrAlgo}
+	\begin{algorithmic}
+		\State Get  $W_s^*$ and $W_a^*$ from the relaxed problem.
+		\State Initialize $Z^*$, $Y^*$ and $\text{val}^*=+\infty$.
+		\State {\color{comment} \footnotesize \# Loop over all possibilities for $Z_n$ (saliency)}
+		\For{ $t$ in 1 : $T_n$}
+			\State $Z$ $\gets$ \texttt{zeros}($T_n$, $1$) {\color{comment} \footnotesize \# Set the $t$-th entry of $Z$ to $1$}
+			\State $Z_t$ $\gets$ $1$ 			
+			\State {\color{comment} \footnotesize \# Definition of the cost matrix}
+			\State $C_n$ $\gets$ $\frac{1}{2M}\left(\texttt{ones}(M_n, 2)-2X_sW_s\right)+\frac{\nu}{T} B_n Z \mathbf{1}_2^\top$ 
+			\State {\color{comment} \footnotesize \# Dynamic program for the tracks}
+			\State $Y_{\min}$ $\gets$ $\argmin_{Y \in \mathcal{Y}_n} \text{Tr}(C_n^TY)$ 
+			\State {\color{comment} \footnotesize \# Cost computation}
+			\State $\text{cost}_Z \gets \frac{1}{2T} \|Z - X_{a} W_{a}\|_F^2$
+			\State $\text{cost}_Y \gets \frac{1}{2M} \|Y_{\min} - X_{s} W_{s}\|_F^2$
+			\State $\text{cost}_{ZY} \gets \frac{\nu}{T}d(Z,Y_{\min})$
+			\State {\color{comment} \footnotesize \# Update solution if better}
+			\State $\text{val} \gets \text{cost}_Z + \text{cost}_Y + \text{cost}_{ZY}$
+			\If{$\text{val} < \text{val}^*$} 
+				\State {$Z^*$ $\gets$ $Z$} 
+				\State {$Y^*$ $\gets$ $Y_{\min}$} 
+				\State {$\text{val}^*$ $\gets$ $\text{val}$} 
+			\EndIf
+		\EndFor
+		\State\Return $Z^*,Y^*$
+	\end{algorithmic}
+\end{algorithm}
+

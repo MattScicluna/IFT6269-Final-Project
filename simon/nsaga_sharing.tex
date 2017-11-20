@@ -1,0 +1,113 @@
+%
+
+\section{Sharing Gradient Memory}
+\label{sect:sharing}
+
+\subsection{$\epsilon$-Approximation Analysis} 
+
+As we have seen, fresher gradient memory, i.e.~a larger choice for $q$, affects the guaranteed convergence rate as $\rho \sim q/n$. However, as long as one step of a $q$-memorization algorithm is as expensive as $q$ steps of a $1$-memorization algorithm, this insight does not lead to practical improvements \textit{per se}. Yet, it raises the question, whether we can accelerate these methods, in particular ${\cal N}$-SAGA, by approximating gradients stored in the $\alpha_i$ variables. Note that we are always using the correct stochastic gradients in the \textit{current} update and by assuring $\sum_{i} \bar\alpha_i=0$, we will not introduce any bias in the update direction. Rather, we lose the guarantee of asymptotically vanishing variance at $w^*$. However, as we will show, it is possible to retain geometric rates up to a $\delta$-ball around $w^*$. 
+
+We will focus on SAGA-style updates for concreteness and investigate an algorithm that mirrors ${\cal N}$-SAGA with the only difference that it maintains approximations $\beta_i$ to the true $\alpha_i$ variables. We aim to guarantee  $\E\| \alpha_i - \beta_i \|^2 \le \epsilon$ and will use Eq.~\eqref{eq:alpha-tilde-bound} to modify the right-hand-side of Lemma \ref{lemma:w-recurrence}. We see that approximation errors $\epsilon_i$ are multiplied with $\gamma^2$, which implies that we should aim for small learning rates, ideally without compromising the ${\cal N}$-SAGA rate. From Theorem \ref{theorem:main} and Corollary \ref{corollary:opt-rho} we can see that we can choose $\gamma \lesssim  q/{\mu n}$ for $n$ sufficiently large, which indicates that there is hope to dampen the effects of the approximations. We now make this argument more precise.
+%
+%
+%
+%
+\begin{theorem}
+\label{theorem:approximate}
+Consider a uniform $q$-memorization algorithm with $\alpha$-updates that are on average $\epsilon$-accurate (i.e. $\E\| \alpha_i - \beta_i \|^2 \le \epsilon$). For any step size $\gamma \le \tilde{\gamma}(K)$, where $\tilde{\gamma}$ is given by Corollary \ref{corollary:patch} in the appendix (note that $\tilde{\gamma}(K) \geq \frac{2}{3} \gamma^*(K)$ and $\tilde{\gamma}(K) \to \gamma^*(K)$ as $K \to 0$), we get 
+\begin{align}
+\Efull \L(w^t,H^t) \le  (1-\mu \gamma)^t  \L_0+ \frac{4 \gamma \epsilon}{\mu}, \quad \text{ with } \L_0 := \|w^0 - w^*\|^2 + s(\gamma) \E \|f_i(w^*)\|^2 ,
+\end{align}
+where $\Efull$ denote the (unconditional) expectation over histories (in contrast to $\E$ which is conditional), and $ s(\gamma) := \frac{4 \gamma}{K \mu} (1-2 L \gamma)$.
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+\end{theorem} 
+\begin{corollary}
+With $\gamma = \min\{\mu , \tilde{\gamma}(K)\}$ we have 
+\begin{align}
+\frac {4 \gamma \epsilon }{\mu}  \le 4 \epsilon, \qquad 
+\text{with a rate} \quad \rho = \min\{\mu^2, \mu \tilde{\gamma}\} \, .
+\end{align}
+\end{corollary} 
+\vspace{-1.5mm}
+In the relevant case of $\mu \sim 1/\sqrt {n}$, we thus converge towards some $\sqrt{\epsilon}$-ball around $w^*$ at a similar rate as for the exact method. For $\mu \sim n^{-1}$, we have to reduce the step size significantly to compensate the extra variance and to still converge to an $\sqrt{\epsilon}$-ball, resulting in the slower rate $\rho \sim n^{-2}$, instead of $\rho \sim n^{-1}$.
+
+We also note that the geometric convergence of SGD with a constant step size to a neighborhood of the solution (also proven in~\cite{schmidt2014convergence}) can arise as a special case in our analysis. By setting $\alpha_i = 0$ in Lemma~\ref{lemma:w-recurrence}, we can take $\epsilon = \E \|f'_i(w^*)\|^2$ for SGD. An approximate $q$-memorization algorithm can thus be interpreted as making $\epsilon$ an algorithmic parameter, rather than a fixed value as in SGD.
+
+\subsection{Algorithms} 
+
+\paragraph*{Sharing Gradient Memory} 
+
+We now discuss our proposal of using neighborhoods for sharing gradient information between close-by data points. Thereby we avoid an increase in gradient computations relative to $q$- or ${\cal N}$-SAGA at the expense of suffering an approximation bias. This leads to a new tradeoff between freshness  and approximation quality, which can be resolved in non-trivial ways, depending on the desired final optimization accuracy. 
+
+We distinguish two types of quantities. First, the gradient memory $\alpha_i$ as defined by the reference algorithm ${\cal N}$-SAGA. Second, the shared gradient memory state $\beta_i$, which is used in a modified update rule in Eq.~\eqref{eq:sgd-corrected}, i.e.~$w^+ = w - \gamma ( f'_i(w) - \beta_i + \bar \beta )$. Assume that we select an index $i$ for the weight update, then we generalize Eq.~\eqref{eq:memorization} as follows
+\begin{align}
+\beta^+_j := \begin{cases} 
+f'_i(w) & \text{if $j \in {\cal N}_i$} \\
+\beta_j & \text{otherwise}
+\end{cases}, \qquad \bar \beta := \frac 1n \sum_{i=1}^n \beta_i, \quad \bar \beta_i := \beta_i - \bar \beta \,.
+\label{eq:shared-memorization}
+\end{align}
+
+%
+
+In the important case of generalized linear models, where  one has 
+%
+$f'_i(w) = \xi'_i(w) x_i$, we can  modify the relevant case in Eq.~\eqref{eq:shared-memorization} by $\beta_j^+ := \xi'_i(w) x_j$. This has the advantages of using the correct direction, while reducing storage requirements. 
+
+\paragraph*{Approximation Bounds}
+
+For our analysis, we need to control the error $\| \alpha_i - \beta_i \|^2 \le \epsilon_i$. This obviously requires problem-specific investigations. 
+
+Let us first look at the case of ridge regression. $f_i(w) := \frac 12 (\langle x_i, w \rangle - y_i)^2 + \frac \lambda 2 \| w\|^2$ and thus $f'_i(w) = \xi'_i(w) x_i + \lambda w$ with $\xi'_i(w) := \langle x_i, w \rangle - y_i$. Considering $j \in {\cal N}_i$ being updated, we have
+\begin{align}
+\| \alpha_j^+ - \beta_j^+\| = | \xi'_j(w) - \xi'_i(w) | \| x_j\|
+\le \left( \delta_{ij}  \|w\| +|y_j - y_i| \right) \| x_j\| =: \epsilon_{ij}(w)
+\label{eq:bound-quadratic}
+\end{align}
+where $\delta_{ij} := \| x_i - x_j \|$. Note that this can be pre-computed with the exception of the norm $\| w\|$ that we only know at the time of an update. 
+
+Similarly, for regularized logistic regression with $y \in \{-1,1\}$, we have $\xi'_i(w) = y_i/(1 + e^{y_i \langle x_i, w\rangle})$. With the requirement on neighbors that $y_i = y_j$ we get 
+\begin{align}
+\| \alpha^+_j - \beta^+_j\| \le \frac{e^{\delta_{ij} \| w\|}-1}{1+ e^{-\langle x_i, w \rangle}} \|x_j\|
+ =: \epsilon_{ij}(w)
+\label{eq:bound-logistic}
+\end{align}
+Again, we can pre-compute $\delta_{ij}$ and $\| x_j\|$. In addition to $\xi'_i(w)$ we can also store $\langle x_i, w \rangle$. %
+
+\paragraph*{$\epsilon {\cal N}$-SAGA}
+
+We can use these bounds in two ways. First, assuming that the iterates stay within a norm-ball (e.g.~$L_2$-ball), we can derive upper bounds
+\begin{align}
+\epsilon_j(r) \ge  \max\{ \epsilon_{ij}(w): j \in {\cal N}_i, \; \|w\| \le r\}, \qquad \epsilon(r) = \frac 1n \sum_{j} \epsilon_j(r)\,. 
+\end{align}
+Obviously, the more compact the neighborhoods are, the smaller $\epsilon(r)$. This is most useful for the analysis. 
+%
+ Second, we can specify a target accuracy $\epsilon$ and then prune neighborhoods dynamically. This approach is more practically relevant as it allows us to directly control $\epsilon$. However, a dynamically varying neighborhood violates Definition \ref{def:memorization}. We fix this in a sound manner by modifying the memory updates as follows:
+ \begin{align}
+\beta^+_j := \begin{cases} 
+f'_i(w) & \text{if $j \in  {\cal N}_i$ and $\epsilon_{ij}(w) \le \epsilon$} \\
+f'_j(w) & \text{if $j \in  {\cal N}_i$ and $\epsilon_{ij}(w) > \epsilon$} \\
+\beta_j & \text{otherwise}
+\end{cases}
+\label{eq:en-saga}
+ \end{align}
+This allows us to interpolate between sharing more aggressively (saving computation) and performing more computations in an exact manner. In the limit of $\epsilon \to 0$, we  recover ${\cal N}$-SAGA, as $\epsilon \to \epsilon^{\max}$ we recover the first variant mentioned. 
+%
+%
+ 
+\paragraph*{Computing Neighborhoods}
+
+Note that the pairwise Euclidean distances show up in the bounds in Eq.~\eqref{eq:bound-quadratic} and \eqref{eq:bound-logistic}. In the classification case we also require $y_i = y_j$, whereas in the ridge regression case, we also want $| y_i - y_j|$ to be small. Thus modulo filtering, this suggests the use of Euclidean distances as the metric for defining neighborhoods. Standard approximation techniques for finding near(est) neighbors can be used. This comes with a computational overhead, yet the additional costs will amortize over multiple runs or multiple data analysis tasks.
+
+%
+
+

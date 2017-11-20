@@ -1,0 +1,202 @@
+\vspace{-2mm}
+\section{Optimizing over Contractions of the Marginal Polytope}
+\vspace{-3mm}
+
+\textbf{Motivation}: 
+We wish to (1) use the fewest possible MAP calls, and (2)
+avoid regions near the boundary where the unbounded curvature of the function
+slows down convergence.  
+A viable option to address (1) is through the use of \emph{correction steps}, where after a Frank-Wolfe step, 
+one optimizes
+over the polytope defined by previously visited vertices of $\MARG$ (called the fully-corrective
+Frank-Wolfe (FCFW) algorithm and proven to be linearly convergence for strongly convex objectives~\citep{lacoste2015MFW}). 
+This does not require additional %
+MAP calls. 
+%
+%
+However, we found (see Sec.~\ref{sec:M_M_eps}) that when optimizing the TRW objective over $\MARG$, performing correction steps
+can surprisingly \emph{hurt} performance.
+%
+%
+%
+%
+This leaves us in a dilemma: correction steps 
+%
+enable decreasing the objective without additional MAP calls,
+but they can also slow global progress since iterates after correction
+sometimes lie close to the boundary of the polytope (where the FW directions become less informative). 
+In a manner akin to barrier methods and to \citet{garber2013linearly}'s
+local linear oracle, our proposed solution maintains the iterates within a contraction of the
+polytope. This gives us most of the mileage obtained from performing the
+correction steps \emph{without} suffering the consequences of venturing too close to the
+boundary of the polytope. We prove a global convergence rate for the
+iterates with respect to the true solution over the full polytope.
+%
+
+We describe convergent algorithms to optimize $\TRW$ for $\vmu \in \MARG$. 
+%
+The approach we adopt to deal with the issue of unbounded gradients at the boundary
+is to perform Frank-Wolfe within a contraction of the marginal polytope
+given by $\Meps$ for $\shrinkAmount \in [0,1]$, with either a fixed $\shrinkAmount$ or an adaptive~$\shrinkAmount$.
+\begin{definition}[Contraction polytope]
+	$\Meps := (1-\shrinkAmount) \MARG + \shrinkAmount\, \unif$,
+        where $\unif\in \MARG$ is the vector representing the uniform
+        distribution.
+\end{definition}
+\vspace{-1mm}
+%
+Marginal vectors that lie within $\Meps$ are bounded away from zero as all the components of $\unif$
+are strictly positive. 
+%
+%
+%
+Denoting $\Vertices^{(\shrinkAmount)}$ as the
+set of vertices of $\Meps$, $\Vertices$ as the set of vertices of $\MARG$ and $f(\vmu) := -\TRW$, the key insight
+that enables our novel approach is that:
+%
+%
+%
+%
+%
+%
+%
+\small
+\begin{equation*}
+	\underbrace{\argmin_{\vv^{(\shrinkAmount)}\in \Vertices^{(\shrinkAmount)}}\innerProd{\nabla f}{\vv^{(\shrinkAmount)}}}_{\algComment{Linear Minimization over $\Meps$}} \equiv\argmin_{\vv \in \Vertices} \underbrace{\innerProd{\nabla f}{(1-\shrinkAmount)\vv + \shrinkAmount\unif}}_{\algComment{Definition of $\vv^{(\shrinkAmount)}$}} 
+\equiv\underbrace{(1-\shrinkAmount) \argmin_{\vv \in \Vertices}\innerProd{\nabla f}{\vv} + \shrinkAmount\unif.}_{\algComment{Run MAP solver and shift vertex}} 
+\end{equation*}
+\normalsize
+Therefore, to solve the FW subproblem~\eqref{eqn:lin_subproblem} over $\Meps$, we can run as usual a MAP solver  and simply shift the resulting vertex of $\MARG$ towards $\unif$ to obtain a vertex of $\Meps$. 
+Our solution to optimize over restrictions of the polytope is more broadly applicable to the optimization problem defined below, with $f$ satisfying Prop.~\ref{prop:prop_bounded_grad} (satisfied by the TRW objective) in order to get convergence rates.
+\begin{problem} 	
+\label{prop:generic_fxn}
+Solve $\min_{\x\in\DOM}f(\x)$ where $\DOM$ is a compact convex set and $f$ is convex and continuously differentiable on the relative interior of $\DOM$.
+\end{problem}
+%
+%
+%
+%
+%
+%
+%
+%
+\begin{properties}
+\hyperref[sec:trw_bounded_lip]{(Controlled growth of Lipschitz constant over $\DOMeps$)}.
+\label{prop:prop_bounded_grad}
+We define $\DOMeps:= (1-\shrinkAmount)\DOM + \shrinkAmount\unif$ for a fixed $\unif$ in the relative interior of $\DOM$. We suppose that there exists a fixed $p \geq 0$ and $L$ such that for any $\shrinkAmount > 0$, $\nabla f(\x)$ has a bounded Lipschitz constant $L_{\shrinkAmount} \leq L\shrinkAmount^{-p}\,\,\,\forall \x\in\DOMeps$.
+\end{properties}
+%
+%
+%
+%
+%
+%
+
+\textbf{Fixed $\shrinkAmount$:}
+The first algorithm fixes a value for $\shrinkAmount$ a-priori
+and performs the optimization over $\DOMeps$. 
+%
+%
+The following theorem bounds the 
+sub-optimality of the iterates with respect to the optimum over $\DOM$. 
+
+\begin{theorem}[Suboptimality bound for fixed-$\shrinkAmount$ algorithm]
+	\label{thm:convergence_fixed_eps_main}
+	Let $f$ satisfy the properties in Prob.~\ref{prop:generic_fxn} and Prop.~\ref{prop:prop_bounded_grad}, and suppose further that $f$ is finite on the boundary of $\DOM$. 
+	Then the use of Frank-Wolfe for $\min_{\x\in\DOMeps} f(\x)$ realizes a sub-optimality over $\DOM$ bounded as:
+	$$f(\xk)-f(\xopt)\leq
+        \frac{2C_{\shrinkAmount}}{(k+2)}+\modContinuity \left( \shrinkAmount \diam(\DOM)\right),$$ 
+        where $\xopt$ is the optimal
+        solution in $\DOM$, $C_{\shrinkAmount} \leq 
+        L_{\shrinkAmount} \diam_{||.||}(\DOMeps)^2 $, and $\modContinuity$
+        is the modulus of continuity function of the (uniformly) continuous $f$ (in particular, $\modContinuity(\delta) \downarrow 0$ as $\delta \downarrow 0$).
+\end{theorem}
+%
+The full proof is given in App.~\ref{sec:theory_fixed_eps}.
+The first term of the bound
+comes from the standard Frank-Wolfe convergence analysis of the
+sub-optimality of $\xk$ relative to $\xopteps$, the optimum over $\DOMeps$, as in~\eqref{eqn:fw_theorem_convergence_original} and using Prop.~\ref{prop:prop_bounded_grad}.
+The second term arises by bounding $f(\xopteps) - f(\x^*) \leq f(\tilde{\x}) - f(\x^*)$ with 
+a cleverly chosen $\tilde{\x} \in \DOMeps$ (as $\xopteps$ is optimal in $\DOMeps$). We pick 
+$\tilde{\x} := (1-\shrinkAmount) \x^* + \shrinkAmount \unif$ and note that $\|\tilde{\x} - \x^*\| \leq \shrinkAmount \diam(\DOM)$. As $f$ is continuous on a compact set, it is uniformly continuous 
+and we thus have $f(\tilde{\x}) - f(\x^*) \leq \modContinuity (\shrinkAmount \diam(\DOM))$ with $\modContinuity$ its modulus of continuity function.
+
+%
+\textbf{Adaptive $\shrinkAmount$: }
+The second variant to solve $\min_{\x\in\DOM} f(\x)$ iteratively perform FW steps over $\DOMeps$, but also decreases $\shrinkAmount$ adaptively.
+The update schedule for $\shrinkAmount$
+is given in Alg.~\ref{alg:adaptive_update} and is motivated by the convergence proof.
+The idea is to ensure that the FW gap over $\DOMeps$ is always at least half the FW gap over $\DOM$,
+relating the progress over $\DOMeps$ with the one over $\DOM$. 
+It turns out that $\text{FW-gap-}\DOMeps = (1-\shrinkAmount) \text{FW-gap-}\DOM + \shrinkAmount\cdot\gunif$, where the ``uniform gap'' $\gunif$ quantifies the decrease of the function when contracting towards $\unif$.
+%
+When $\gunif$ is negative and large compared to 
+the FW gap, we need to shrink $\shrinkAmount$ (see step~5 in~Alg.~\ref{alg:adaptive_update}) to
+ensure that the $\shrinkAmount$-modified direction 
+%
+is a sufficient descent direction. 
+%
+%
+%
+\begin{algorithm}[t]
+	\caption{Updates to $\shrinkAmount$ after a MAP call (Adaptive $\shrinkAmount$ variant)} 
+	\label{alg:adaptive_update}
+	\begin{algorithmic}[1]
+	\STATE At iteration $k$. Assuming $\xk,\unif,\epsk{k-1},f$ are defined and $\sk$ has been computed
+	\STATE Compute $\gk=\brangle{-\nabla f(\xk),\sk-\xk}$ \algComment{Compute FW gap}
+	\STATE Compute $\gunif = \brangle{-\nabla f(\xk),\unif-\xk}$ \algComment{Compute ``uniform gap''}
+		\IF{$\gunif<0$}
+		\STATE Let $\tilde{\shrinkAmount} = \frac{\gk}{-4\gunif}$  \algComment{Compute new proposal for $\shrinkAmount$}
+			\IF{$\tilde{\shrinkAmount}<\epsk{k-1}$}
+				\STATE $\epsk{k} = \min\left(\tilde{\shrinkAmount},\frac{\epsk{k-1}}{2}\right)$ \algComment{Shrink by at least a factor of two if proposal is smaller}
+			\ENDIF
+		\ENDIF	\algComment{and set $\epsk{k} = \epsk{k-1}$ if it was not updated}
+	\end{algorithmic}
+\end{algorithm}
+We can show that the algorithm converges to the global solution as follows:
+\begin{theorem}[Global convergence for adaptive-$\shrinkAmount$ variant over $\DOM$]
+	\label{thm:convergence_adaptive_eps_main}
+	For a function $f$ satisfying the properties in Prob.~\ref{prop:generic_fxn} and Prop.~\ref{prop:prop_bounded_grad}, the sub-optimality of the iterates obtained by running the FW updates over $\DOMeps$ with $\shrinkAmount$ updated according to Alg.~\ref{alg:adaptive_update}
+	is bounded as:
+	%
+	%
+	%
+	%
+	%
+	%
+	%
+	$$f(\xk)-f(\xopt)\leq O\left(k^{-\frac{1}{p+1}}\right).$$
+\end{theorem}
+A full proof with a precise rate and constants is given in App.~\ref{sec:theory_adaptive_eps}.
+The sub-optimality $\hk := f(\xk)-f(\xopt)$ traverses three stages with an overall rate as above. 
+%
+%
+The updates to $\shrinkAmount^{(k)}$ as in Alg.~\ref{alg:adaptive_update} 
+enable us to (1) upper bound the duality gap over $\DOM$ as a function of the duality gap in $\DOMeps$ 
+and (2) lower bound the value
+of $\shrinkAmount^{(k)}$ as a function of $\hk$. Applying the standard Descent Lemma with the Lipschitz constant on the gradient of the form $L\shrinkAmount^{-p}$ (Prop.~\ref{prop:prop_bounded_grad}), and replacing $\shrinkAmount^{(k)}$ by its bound in $\hk$, we get the recurrence: $\hnext \leq \hk - C \hk^{p+2}$. Solving this gives us the desired bound.
+
+%
+\textbf{Application to the TRW Objective: }
+$\min_{\vmu\in\MARG}-\TRW$ is akin to $\min_{\x\in\DOM}f(\x)$ and the
+(strong) convexity of $-\TRW$ has been previously shown \citep{wainwright2005new,london_icml15}.
+The gradient of the TRW objective is Lipschitz continuous over $\Meps$
+since all marginals are strictly positive. Its growth for
+Prop.~\ref{prop:prop_bounded_grad} can be bounded with $p=1$ as we
+show in App.~\ref{sec:trw_bounded_lip}. This gives a rate of
+convergence of $O(k^{-1/2})$ for the adaptive-$\shrinkAmount$ variant,
+which interestingly is a typical rate for non-smooth convex optimization. The hidden constant is of the order~$O(\| \theta \| \cdot |V|)$. The modulus of continuity $\modContinuity$ for the TRW objective is close to linear (it is almost a Lipschitz function), and its constant is instead of the order $O(\| \theta \| + |V|)$.
+
+%
+%
+%
+%
+%
+%
+%
+
+%
+%
+%
+
+

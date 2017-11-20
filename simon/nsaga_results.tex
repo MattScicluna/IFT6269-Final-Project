@@ -1,0 +1,71 @@
+%
+%
+\begin{figure*}
+  \begin{center}
+    \begin{tabular}{@{}c@{\hspace{2mm}}c@{\hspace{2mm}}c@{}}
+      (a) {\it Cov} &
+      (b) {\it Ijcnn1} &
+      (c) {\it Year} \\    
+      \includegraphics[width=0.32\linewidth]{figures/config_cov_log_q20_log_l1e-1_0.pdf} &
+      \includegraphics[width=0.32\linewidth]{figures/config_ijcn_log_q20_log_l1e-1_0.pdf} &
+      \includegraphics[width=0.32\linewidth]{config_year_q20_log_l1e-1_0.pdf} \\
+      & {\scriptsize $\mu=10^{-1}$, gradient evaluation} & \vspace{2mm} \\ 
+      \includegraphics[width=0.32\linewidth]{figures/config_cov_log_q20_log_l1e-3_0.pdf} &
+      \includegraphics[width=0.32\linewidth]{figures/config_ijcn_log_q20_log_l1e-3_0.pdf} &
+      \includegraphics[width=0.32\linewidth]{config_year_q20_log_l1e-3_0.pdf} \\
+      & {\scriptsize $\mu=10^{-3}$, gradient evaluation} & \vspace{2mm} \\
+      \includegraphics[width=0.32\linewidth]{figures/config_cov_log_q20_log_l1e-1_1.pdf} &
+      \includegraphics[width=0.32\linewidth]{figures/config_ijcn_log_q20_log_l1e-1_1.pdf} &
+      \includegraphics[width=0.32\linewidth]{config_year_q20_log_l1e-1_1.pdf} \\
+      & {\scriptsize $\mu=10^{-1}$, datapoint evaluation} & \vspace{2mm} \\
+      \includegraphics[width=0.32\linewidth]{figures/config_cov_log_q20_log_l1e-3_1.pdf} &
+      \includegraphics[width=0.32\linewidth]{figures/config_ijcn_log_q20_log_l1e-3_1.pdf} &
+      \includegraphics[width=0.32\linewidth]{config_year_q20_log_l1e-3_1.pdf} \\
+      & {\scriptsize $\mu=10^{-3}$, datapoint evaluation} & \vspace{2mm} \\
+    \end{tabular}
+  \vspace{2mm}
+  \caption{Comparison of $\epsilon {\cal N}$-SAGA, $q$-SAGA, SAGA and SGD (with decreasing and constant step size) on three datasets. The top two rows show the suboptimality as a function of the number of gradient evaluations for two different values of $\mu=10^{-1}, 10^{-3}$. The bottom two rows show the suboptimality as a function of the number of datapoint evaluations (i.e. number of stochastic updates) for two different values of $\mu=10^{-1}, 10^{-3}$.}
+  \label{fig:results}
+\end{center}
+\end{figure*}
+%
+
+\section{Experimental Results}
+\label{section:results}
+
+\paragraph{Algorithms} We present experimental results on the performance of the different variants of memorization algorithms for variance reduced SGD as discussed in this paper. SAGA has been uniformly superior to SVRG in our experiments, so we compare SAGA and $\epsilon {\cal N}$-SAGA (from Eq.~\eqref{eq:en-saga}), alongside with SGD as a straw man and $q$-SAGA as a point of reference for speed-ups. We have chosen $q=20$ for $q$-SAGA and $\epsilon {\cal N}$-SAGA. The same setting was used across all data sets and experiments. 
+
+
+\paragraph{Data Sets}
+
+As special cases for the choice of the loss function and regularizer in Eq.~\eqref{eq:problem}, we consider two commonly occurring problems in machine learning, namely least-square regression and $\ell_2$-regularized logistic regression.
+%
+We apply least-square regression on the million song year regression from the UCI repository. This dataset contains $n = 515,345$ data points, each described by $d=90$ input features.
+%
+We apply logistic regression on the {\it cov} and {\it ijcnn1} datasets obtained from the {\it libsvm} website
+\footnote{\url{http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets}}. The
+         {\it cov} dataset contains $n = 581,012$ data points, each
+         described by $d = 54$ input features. The {\it ijcnn1}
+         dataset contains $n = 49,990$ data points, each described by
+         $d = 22$ input features.
+%
+We added an $\ell_2$-regularizer $\Omega(w) = \mu \|w\|_2^2$ to ensure
+the objective is strongly convex.
+
+\paragraph{Experimental Protocol}
+
+We have run the algorithms in question in an i.i.d.~sampling setting and averaged the results over 5 runs. Figure \ref{fig:results} shows the  evolution of the suboptimality $f^\delta$ of the objective as a function of two different metrics: (1) in terms of the number of update steps performed (``datapoint evaluation"), and (2) in terms of the number of gradient computations (``gradient evaluation"). Note that SGD and SAGA compute one stochastic gradient per update step unlike $q$-SAGA, which is included here not as a practically relevant algorithm, but as an indication of potential improvements that could be achieved by fresher corrections. A step size $\gamma=\frac {q}{\mu n}$ was used everywhere, except for ``plain SGD''. Note that as $K \ll 1$ in all cases, this is close to the optimal value suggested by our analysis; moreover, using a step size of $\sim \frac{1}{L}$ for SAGA as suggested in previous work~\cite{schmidt2013minimizing} did not appear to give better results. For plain SGD, we used a schedule of the form $\gamma_t = \gamma_0/t$ with constants optimized coarsely via cross-validation. The $x$-axis is expressed in units of $n$ (suggestively called "epochs"). 
+
+\vspace{-1.3mm}
+\paragraph{SAGA vs.~SGD cst}  As we can see, if we run SGD with the same constant step size as SAGA, it takes several epochs until SAGA really shows a significant gain. The constant step-size variant of SGD is faster in the early stages until it converges to a neighborhood of the optimum, where individual runs start showing a very noisy behavior. 
+
+\vspace{-1.3mm}
+\paragraph{SAGA vs.~$q$-SAGA} 
+$q$-SAGA outperforms plain SAGA quite consistently when counting stochastic update steps. This establishes optimistic reference curves of what we can expect to achieve with $\epsilon {\cal N}$-SAGA. The actual  speed-up is somewhat data set dependent.  
+
+\vspace{-1.3mm}
+\paragraph{$\epsilon{\cal N}$-SAGA vs.~SAGA and $q$-SAGA} $\epsilon {\cal N}$-SAGA with sufficiently small $\epsilon$ can realize much of the possible freshness gains of $q$-SAGA and performs very similar for a few (2-10) epochs, where it traces nicely between the SAGA and $q$-SAGA curves. We see solid speed-ups on all three datasets for both $\mu=0.1$ and $\mu=0.001$. 
+
+\vspace{-1.3mm}
+\paragraph{Asymptotics} It should be clearly stated that running $\epsilon{\cal N}$-SAGA at a fixed $\epsilon$ for longer will not result in good  asymptotics on the empirical risk. This is because, as theory predicts, $\epsilon{\cal N}$-SAGA can not drive the suboptimality to zero, but rather levels-off at a point determined by $\epsilon$. In our experiments, the cross-over point with SAGA was typically after $5-15$ epochs. Note that the gains in the first epochs can be significant, though. In practice, one will either define a desired accuracy level and choose $\epsilon$ accordingly or one will switch to SAGA for accurate convergence. 
+\vspace{-1mm}

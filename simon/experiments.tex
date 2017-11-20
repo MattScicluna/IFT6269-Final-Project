@@ -1,0 +1,216 @@
+\vspace{-2mm}
+\section{Experimental Results\label{sec:expts}}
+\vspace{-3mm}
+
+\textbf{Setup: }
+The L1 error in marginals is computed as:
+$\zeta_{\mu} := \frac{1}{N} \sum_{i=1}^N |\mu_i(1)-\mu_i^*(1)|$. When using exact MAP inference, 
+the error in $\log Z$ (denoted $\zeta_{\log Z}$) is computed
+by adding the duality gap to the primal (since this guarantees us an upper bound). For approximate
+MAP inference, we plot the primal objective. 
+We use a non-uniform initialization of $\vrho$ computed with the Matrix Tree Theorem \citep{sontag2007new,koo2007structured}. 
+We perform 10 updates to $\vrho$, optimize $\vmu$ to a duality gap of $0.5$ on $\MARG$, and always
+perform correction steps. We use $\LOCALSEARCH$ only for the real-world instances.
+%
+%
+%
+We use the implementation of TRBP and the Junction Tree Algorithm (to compute exact marginals) in libDAI~\citep{Mooij_libDAI_10}.
+%
+Unless specified, we compute 
+marginals by optimizing the TRW objective using the adaptive-$\shrinkAmount$ variant of the
+algorithm (denoted in the figures as $M_{\shrinkAmount})$.
+%
+%
+%
+
+\textbf{MAP Solvers:} 
+For approximate MAP, we run three solvers in parallel:
+QPBO \citep{kolmogorov2007minimizing,boykov2004experimental},
+TRW-S \citep{kolmogorov2006convergent} and ICM \citep{besag1986statistical} using
+OpenGM \citep{andres2012opengm} and use the result that realizes the highest energy. 
+For exact inference, we use \citet{gurobi} or toulbar2 \citep{allouche2010toulbar2}.
+
+\textbf{Test Cases:} All of our test cases are on binary pairwise MRFs.
+	(1) \textit{Synthetic 10 nodes cliques}: Same setup as
+        \citet[Fig.~2]{sontag2007new}, with $9$ sets of $100$ instances each with coupling strength drawn from $\mathcal{U}[-\theta,\theta]$ for $\theta\in \{0.5,1,2,\ldots,8\}$.  
+	(2) \textit{Synthetic Grids}: $15$ trials with $5\times5$ grids.
+		We sample $\theta_i \sim\mathcal{U}[-1,1]$
+          and $\theta_{ij}\in[-4,4]$ for nodes and edges. The
+          potentials were $(-\theta_i,\theta_i)$ for nodes and
+          $(\theta_{ij},-\theta_{ij}; -\theta_{ij},\theta_{ij})$ for edges.
+	(3) \textit{Restricted Boltzmann Machines (RBMs)}: From the Probabilistic Inference Challenge 2011.\footnote{\url{http://www.cs.huji.ac.il/project/PASCAL/index.php}}
+	(4) \textit{Horses}: Large ($N\approx 12000$) MRFs representing images from the Weizmann Horse Data \citep{classSpec} with potentials learned by
+	\cite{domke2013learning}. 
+	%\cite{pal2012learning}.
+	(5) \textit{Chinese Characters}: An image completion task from
+        the KAIST Hanja2 database, compiled in OpenGM
+        by~\citet{andres2012opengm}. The potentials were learned using Decision Tree Fields~\citep{nowozin2011decision}.
+		The MRF is not a grid due to skip edges that tie nodes at various offsets. The potentials are a combination of submodular and 
+		supermodular and therefore a harder task for inference algorithms. 
+
+%
+\newpage
+		\centerline{\textbf{On the Optimization of $\MARG$ versus $\Meps$\label{sec:M_M_eps}}}
+We compare the performance of Alg.~\ref{alg:algInfadaptive} on optimizing over $\MARG$ (with and without correction), optimizing 
+over $\Meps$ with fixed-$\shrinkAmount = 0.0001$ (denoted $M_{0.0001}$) and optimizing over $\Meps$ using the adaptive-$\shrinkAmount$ variant.
+These plots are averaged across all the trials for the \emph{first} iteration of optimizing over $\TREEPOL$.
+We show error as a function of the number of MAP calls since this is the bottleneck
+for large MRFs. 
+Fig.~\ref{fig:M_M_eps}, \ref{fig:M_M_eps2} depict the results of this optimization aggregated across trials. 
+We find that all
+variants settle on the same average error. The adaptive $\shrinkAmount$ variant converges faster on average
+followed by the fixed $\shrinkAmount$ variant. Despite relatively quick convergence for
+$\MARG$ with no correction on the grids, we found that correction was crucial
+to reducing the
+%
+%
+number of MAP calls in subsequent steps of inference after updates to $\vrho$. %
+As highlighted earlier, correction steps on $\MARG$ (in blue) worsen 
+convergence, an effect brought about by iterates wandering too close to the boundary of $\MARG$.
+
+%
+%
+
+\vspace{2mm}
+\centerline{\textbf{On the Applicability of Approximate MAP Solvers}}
+
+\textbf{Synthetic Grids:}
+Fig.~\ref{fig:approxVsExact_l1} depicts the accuracy of approximate MAP 
+solvers versus exact MAP solvers aggregated across trials for $5\times5$ grids.
+The results using approximate MAP inference are competitive with those of exact
+inference, even as the optimization is tightened over $\TREEPOL$. 
+This is an encouraging and non-intuitive result
+since it indicates that one can achieve high quality marginals through
+the use of relatively cheaper approximate MAP oracles.%
+
+\begin{figure}[t]
+\vspace{-1mm}
+\centering
+\subfigure[\small{$\zeta_{\log Z}$: $5\times5$ grids \qquad \newline $\MARG$ vs $\MARG_{\shrinkAmount}$}]{
+	\label{fig:M_M_eps}
+	\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/M_M_eps/gridWi5Tr_M_M_eps_logz_maxrho1.pdf}
+}
+\centering
+\subfigure[\small{$\zeta_{\log Z}$: $10$ node cliques \qquad \newline $\MARG$ vs $\MARG_{\shrinkAmount}$}]{
+	\label{fig:M_M_eps2}
+\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/M_M_eps/synthetic_M_M_eps_logz_maxrho1.pdf}
+}
+\centering
+\subfigure[\small{$\zeta_{\mu}$: $5\times5$ grids \newline Approx. vs. Exact MAP}]{
+\label{fig:approxVsExact_l1}
+	\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/approxVsExact/gridWi5Tr_approxVsExact_l1.pdf}
+}
+\centering
+\subfigure[\small{$\zeta_{\log Z}$: 40 node RBM \newline Approx. vs. Exact MAP}]{
+\label{fig:rbm20_logz}
+\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/RBM/rbm_20-logz-unrolled.pdf}
+}
+\centering
+\subfigure[\small{$\zeta_{\mu}$: 10 node cliques \newline Optimization over $\TREEPOL$}]{
+\label{fig:syntheticComplete_tightening_l1}
+\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/Synthetic/SyntheticL1VsTheta.pdf}
+}
+\centering
+\subfigure[\small{$\zeta_{\log Z}$: 10 node cliques \newline Optimization over $\TREEPOL$}]{
+\label{fig:syntheticComplete_tightening_logz}
+\includegraphics[height=4cm,width=6cm,keepaspectratio]{./images/Synthetic/SyntheticlogzVsTheta.pdf}
+}
+\vspace{-3mm}
+\caption{\small Synthetic Experiments: 
+	In Fig. \ref{fig:approxVsExact_l1} \& \ref{fig:rbm20_logz}, we unravel MAP calls across updates to $\vrho$.
+  Fig. \ref{fig:rbm20_logz} corresponds to a single RBM (not an aggregate over trials) where for
+  ``Approx MAP'' we plot the absolute error between the primal
+  objective and $\log Z$ (not guaranteed to be an upper bound).}
+\vspace{-4mm}
+\end{figure}
+
+%
+
+\textbf{RBMs:}
+As in \cite{salakhutdinov2008learning}, we observe for RBMs that the bound provided by $\TRW$ over $\LOCAL_{\shrinkAmount}$ 
+is loose and does not get better when optimizing over 
+$\TREEPOL$.
+%
+%
+As Fig.~\ref{fig:rbm20_logz} 
+depicts for a single RBM,
+optimizing over $\MARG_\shrinkAmount$
+realizes significant gains in the upper bound on $\log Z$ which improves with updates to $\vrho$. 
+The gains are preserved with the use of the approximate MAP solvers.
+%
+%
+%
+Note that there are also fast approximate MAP solvers specifically for RBMs \citep{sidaw2013rbm}.
+
+\textbf{Horses:} See Fig.~\ref{fig:largeScale} (right). 
+%
+The models are close to submodular and the local relaxation is a
+good approximation to the marginal polytope.
+%
+Our marginals are visually similar to those obtained by TRBP and our algorithm is able
+to scale to large instances 
+by using approximate MAP solvers. 
+%
+%
+%
+%
+%
+%
+
+
+%
+%
+\vspace{1mm}
+\centerline{\textbf{On the Importance of Optimizing over $\TREEPOL$}}
+
+\textbf{Synthetic Cliques: }
+In Fig.~\ref{fig:syntheticComplete_tightening_l1}, \ref{fig:syntheticComplete_tightening_logz},
+%
+%
+we study the effect 
+of tightening over $\TREEPOL$ against coupling strength $\theta$.
+%
+We consider the $\zeta_{\mu}$ and $\zeta_{\log Z}$ obtained for the final marginals before updating $\vrho$ (step~19)
+and compare to the values obtained after optimizing over $\TREEPOL$ (marked with $\vrho_{opt}$). 
+%
+%
+The optimization over $\TREEPOL$ has little effect on TRW optimized over $\LOCAL_\shrinkAmount$. 
+For optimization over $\MARG_\shrinkAmount$,  
+%
+updating $\vrho$ realizes better marginals and bound on $\log Z$
+%
+(over and above 
+those
+%
+obtained in 
+\cite{sontag2007new}).
+
+\textbf{Chinese Characters:} Fig.~\ref{fig:largeScale} (left) displays marginals across iterations of
+optimizing over $\TREEPOL$.
+The submodular and supermodular potentials lead to frustrated models for
+which $\LOCAL_\shrinkAmount$ is very loose, which results in TRBP
+obtaining poor results.\footnote{We run TRBP for 1000 iterations
+  using damping = 0.9; the algorithm converges with a max norm difference between consecutive iterates of 0.002.
+  Tightening over $\TREEPOL$ did not significantly change the results of TRBP.}
+Our method produces reasonable marginals even before the first
+update to $\vrho$, and these improve with tightening over $\TREEPOL$. 
+
+\vspace{2mm}
+\centerline{\textbf{Related Work for Marginal Inference with MAP Calls}}
+%
+%
+
+\cite{hazan2012partition} estimate 
+$\log Z$ by averaging MAP estimates obtained on randomly perturbed
+inflated graphs. 
+Our implementation of the method performed well 
+in approximating $\log Z$ but the marginals (estimated by fixing the value of each
+random variable and estimating $\log Z$ for the resulting graph) were
+less accurate than our method (Fig.~\ref{fig:syntheticComplete_tightening_l1}, \ref{fig:syntheticComplete_tightening_logz}).
+
+\begin{figure*}
+\centering
+\includegraphics[width=\textwidth]{./images/large/large_horizontal_annotated_final.pdf}
+%
+\caption{\small{Results on real world test cases. FW(i) corresponds to the final marginals at the $i$th iteration of optimizing $\vrho$. The area highlighted on the Chinese Characters depicts the region of uncertainty.}\label{fig:largeScale}}
+\end{figure*}
