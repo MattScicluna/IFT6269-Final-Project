@@ -49,9 +49,14 @@ if __name__ == '__main__':
     argparser.add_argument('-l', '--predict_len', type=int, default=100)
     argparser.add_argument('-t', '--temperature', type=float, default=0.8)
     argparser.add_argument('--cuda', action='store_true')
+    argparser.add_argument('--cpu', action='store_true')
     args = argparser.parse_args()
 
-    decoder = torch.load(args.filename)
-    del args.filename
+    if args.cpu:
+    	decoder = torch.load(args.filename, map_location=lambda storage, loc: storage)
+    else:
+    	decoder = torch.load(args.filename)
+    	
+    del args.filename, args.cpu
     print(generate(decoder, **vars(args)))
 
