@@ -56,6 +56,7 @@ if __name__ == '__main__':
     	decoder = torch.load(args.filename, map_location=lambda storage, loc: storage)
     else:
     	decoder = torch.load(args.filename)
+    	
     del args.filename, args.cpu
     print(generate(decoder, **vars(args)))
 
