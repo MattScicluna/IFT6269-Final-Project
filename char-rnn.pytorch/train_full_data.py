@@ -5,13 +5,14 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import argparse
-import os
-
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+import os
+import time
 
-from helpers import *
-from model import *
-from generate import *
+from dataset import WordDataset, n_characters, time_since
+from model import CharRNN
+from generate import generate
 
 
 # Parse command line arguments
@@ -25,23 +26,17 @@ argparser.add_argument('--n_layers', type=int, default=2)
 argparser.add_argument('--learning_rate', type=float, default=0.01)
 argparser.add_argument('--chunk_len', type=int, default=200)
 argparser.add_argument('--batch_size', type=int, default=100)
+argparser.add_argument('--num_workers', type=int, default=8)
 argparser.add_argument('--cuda', action='store_true')
 args = argparser.parse_args()
 
-if args.cuda:
-    print("Using CUDA")
 
-file, file_len = read_file(args.filename)
+train_dataset = WordDataset(args.filename, args.chunk_len)
+dataloader = DataLoader(train_dataset, batch_size=args.batch_size,
+                        shuffle=True, num_workers=args.num_workers,
+                        drop_last=True)
 
-def random_training_set(chunk_len, batch_size):
-    inp = torch.LongTensor(batch_size, chunk_len)
-    target = torch.LongTensor(batch_size, chunk_len)
-    for bi in range(batch_size):
-        start_index = random.randint(0, file_len - chunk_len)
-        end_index = start_index + chunk_len + 1
-        chunk = file[start_index:end_index]
-        inp[bi] = char_tensor(chunk[:-1])
-        target[bi] = char_tensor(chunk[1:])
+def prep_data(inp, target):
     inp = Variable(inp)
     target = Variable(target)
     if args.cuda:
@@ -90,10 +85,12 @@ all_losses = []
 loss_avg = 0
 
 try:
-    print("Training for %d epochs..." % args.n_epochs)
+    print("Training for {} epochs...".format(args.n_epochs))
     for epoch in tqdm(range(1, args.n_epochs + 1)):
-        loss = train(*random_training_set(args.chunk_len, args.batch_size))
-        loss_avg += loss
+        loss = 0
+        for sample in dataloader:
+            loss += train(*prep_data(sample['input'], sample['target']))
+            loss_avg += loss
 
         if epoch % args.print_every == 0:
             print('[%s (%d %d%%) %.4f]' % (time_since(start), epoch, epoch / args.n_epochs * 100, loss))
@@ -105,4 +102,3 @@ try:
 except KeyboardInterrupt:
     print("Saving before quit...")
     save()
-
