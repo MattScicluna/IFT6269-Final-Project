@@ -19,13 +19,13 @@ from generate import generate
 argparser = argparse.ArgumentParser()
 argparser.add_argument('filename', type=str)
 argparser.add_argument('--model', type=str, default="gru")
-argparser.add_argument('--n_epochs', type=int, default=2000)
-argparser.add_argument('--print_every', type=int, default=100)
-argparser.add_argument('--hidden_size', type=int, default=100)
-argparser.add_argument('--n_layers', type=int, default=2)
+argparser.add_argument('--n_epochs', type=int, default=30)
+argparser.add_argument('--print_every', type=int, default=2)
+argparser.add_argument('--hidden_size', type=int, default=200)
+argparser.add_argument('--n_layers', type=int, default=3)
 argparser.add_argument('--learning_rate', type=float, default=0.01)
 argparser.add_argument('--chunk_len', type=int, default=200)
-argparser.add_argument('--batch_size', type=int, default=100)
+argparser.add_argument('--batch_size', type=int, default=300)
 argparser.add_argument('--num_workers', type=int, default=8)
 argparser.add_argument('--cuda', action='store_true')
 args = argparser.parse_args()
@@ -94,7 +94,7 @@ try:
 
         if epoch % args.print_every == 0:
             print('[%s (%d %d%%) %.4f]' % (time_since(start), epoch, epoch / args.n_epochs * 100, loss))
-            print(generate(decoder, 'Wh', 100, cuda=args.cuda), '\n')
+            print(generate(decoder, 'It is trivial to see that ', 100, cuda=args.cuda), '\n')
 
     print("Saving...")
     save()
