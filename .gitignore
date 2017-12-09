@@ -1,2 +1,9 @@
+
 /.idea
+
 /data/enwik8
+
+*.swp
+
+*__pycache__*
+
