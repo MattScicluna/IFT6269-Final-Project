@@ -34,6 +34,7 @@ argparser.add_argument('--batch_size', type=int, default=300)
 argparser.add_argument('--num_workers', type=int, default=8)
 argparser.add_argument('--cuda', action='store_true')
 argparser.add_argument('--full_dataset', action='store_true')
+argparser.add_argument('--model_file', type=str)
 args = argparser.parse_args()
 
 def prep_data(inp, target):
@@ -77,9 +78,12 @@ def train(inp, target):
     return loss.data[0] / args.chunk_len
 
 def save():
-    save_filename = os.path.splitext(os.path.basename(args.filename))[0] + '.pt'
-    torch.save(decoder, save_filename)
-    print('Saved as %s' % save_filename)
+    if args.model_file:
+        filename = args.model_file
+    else:
+        filename = os.path.splitext(os.path.basename(args.filename))[0] + '.pt'
+    torch.save(decoder, filename)
+    print('Saved as {}'.format(filename))
 
 # Initialize models and start training
 
