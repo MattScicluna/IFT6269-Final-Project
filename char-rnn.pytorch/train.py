@@ -33,6 +33,7 @@ argparser.add_argument('--chunk_len', type=int, default=200)
 argparser.add_argument('--batch_size', type=int, default=300)
 argparser.add_argument('--num_workers', type=int, default=8)
 argparser.add_argument('--cuda', action='store_true')
+argparser.add_argument('--cpu', action='store_true')
 argparser.add_argument('--full_dataset', action='store_true')
 argparser.add_argument('--model_file', type=str)
 args = argparser.parse_args()
@@ -125,7 +126,7 @@ try:
 
         if epoch % args.print_every == 0:
             pcnt = epoch / args.n_epochs * 100
-            log = '{} ({} {}%) {:.4f}'
+            log = '{} ({} {:.1f}%) {:.4f}'
             print(log.format(time_since(start), epoch, pcnt, loss))
             seed = 'It is trivial to see that '
             print(generate(decoder, seed, 100, cuda=args.cuda), '\n')

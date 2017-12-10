@@ -42,7 +42,7 @@ def generate(decoder, prime_str='A', predict_len=100, temperature=0.8, cuda=Fals
 # Run as standalone script
 if __name__ == '__main__':
 
-# Parse command line arguments
+    # Parse command line arguments
     argparser = argparse.ArgumentParser()
     argparser.add_argument('filename', type=str)
     argparser.add_argument('-p', '--prime_str', type=str, default='A')
