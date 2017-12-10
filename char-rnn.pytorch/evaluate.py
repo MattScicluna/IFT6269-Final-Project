@@ -54,10 +54,11 @@ def main():
         loss += evaluate(decoder, criterion, input_, target, args.batch_size,
                          args.chunk_len, args.cuda)
         num_samples += 1
+    bpc = loss / num_samples # bits per character
+    #perplexity = 2 ** (loss / num_samples)
 
-    perplexity = 2 ** (loss / num_samples)
-
-    print('Loss: {:.2f}, Perplexity: {:.2f}'.format(loss, perplexity))
+    print('Loss: {:.2f}, BPC: {:.2f}'.format(loss, bpc))
+    #print('Loss: {:.2f}, Perplexity: {:.2f}'.format(loss, perplexity))
 
 if __name__ == '__main__':
     main()
