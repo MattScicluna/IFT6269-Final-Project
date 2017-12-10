@@ -24,7 +24,10 @@ from model import CharRNN
 def train(decoder, optimizer, criterion, inp, target, batch_size, chunk_len, cuda):
     hidden = decoder.init_hidden(batch_size)
     if cuda:
-        hidden = hidden.cuda()
+        if decoder.model == "gru":
+            hidden = hidden.cuda()
+        else: # lstm
+            hidden = (hidden[0].cuda(), hidden[1].cuda())
     decoder.zero_grad()
     loss = 0
 
@@ -100,7 +103,7 @@ def main():
     try:
         prev_valid_loss = sys.maxsize
 
-        print('Training for {} epochs...'.format(args.n_epochs))
+        print('Training for {} epochs...'.format(args.n_layerspochs))
         for epoch in range(1, args.n_epochs + 1):
             train_loss = 0
             for s in train_dataloader:
