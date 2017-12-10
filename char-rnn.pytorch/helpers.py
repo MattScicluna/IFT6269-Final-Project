@@ -6,6 +6,7 @@ import random
 import time
 import math
 import torch
+from torch.autograd import Variable
 
 # Reading and un-unicode-encoding data
 
@@ -34,4 +35,12 @@ def time_since(since):
     m = math.floor(s / 60)
     s -= m * 60
     return '%dm %ds' % (m, s)
+
+def prep_data(inp, target, cuda):
+    inp = Variable(inp)
+    target = Variable(target)
+    if cuda:
+        inp = inp.cuda()
+        target = target.cuda()
+    return inp, target
 
