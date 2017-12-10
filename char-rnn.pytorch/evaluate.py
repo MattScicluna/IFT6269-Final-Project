@@ -16,7 +16,10 @@ def evaluate(decoder, criterion, input_, target, batch_size, chunk_len, cuda):
 
     hidden = decoder.init_hidden(batch_size)
     if cuda:
-        hidden = hidden.cuda()
+        if isinstance(hidden, tuple): #cuda
+            hidden = (hidden[0].cuda(), hidden[1].cuda())
+        else:
+            hidden = hidden.cuda()
 
     loss = 0
     for c in range(chunk_len):
