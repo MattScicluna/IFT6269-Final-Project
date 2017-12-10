@@ -49,7 +49,7 @@ def save(decoder, model_file, filename, epoch, train_loss, valid_loss):
                 + '_input' + str(decoder.input_size) + '_output' + str(decoder.output_size) \
                 + '_hs' + str(decoder.hidden_size) + '_trainL' + str(train_loss)  \
                 + '_valL' + str(valid_loss) + '.pt'
-    torch.save(decoder, filename)
+    torch.save(decoder, 'models/' + filename)
     print('Saved as {}'.format(filename))
 
 
@@ -103,7 +103,7 @@ def main():
     try:
         prev_valid_loss = sys.maxsize
 
-        print('Training for {} epochs...'.format(args.n_layerspochs))
+        print('Training for {} epochs...'.format(args.n_epochs))
         for epoch in range(1, args.n_epochs + 1):
             train_loss = 0
             for s in train_dataloader:

@@ -12,11 +12,11 @@
 
 if [ "$1" == "MILA" ]; then
     DATASET="data/train.txt"
-    MODEL="data/mila.pt"
+    MODEL="models/mila.pt"
     SEED="It is trivial to see that: "
 elif [ "$1" == "WIKI" ]; then
     DATASET="data/enwik8"
-    MODEL="data/wiki.pt"
+    MODEL="models/wiki.pt"
     SEED="A"
 else
   echo "Unrecognised data set '$1'. Options are 'MILA' or 'WIKI'"
