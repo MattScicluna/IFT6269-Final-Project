@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 # local imports
 from dataset import WordDataset, n_characters, time_since
@@ -40,18 +41,10 @@ def train(decoder, optimizer, criterion, inp, target, batch_size, chunk_len, cud
 
     return loss.data[0] / chunk_len
 
-def save(decoder, model_file, filename, epoch, train_loss, valid_loss):
-    if model_file:
-        filename = model_file
-    else:
-        #filename = os.path.splitext(os.path.basename(filename))[0] 
-        filename = decoder.model + '_epoch' + str(epoch) + '_nlayers' + str(decoder.n_layers) \
-                + '_input' + str(decoder.input_size) + '_output' + str(decoder.output_size) \
-                + '_hs' + str(decoder.hidden_size) + '_trainL' + str(round(train_loss))  \
-                + '_valL' + str(round(valid_loss)) + '.pt'
-    torch.save(decoder, 'models/' + filename)
-    print('Saved as {}'.format(filename))
-
+def model_file_name(decoder, epoch, train_loss, val_loss):
+    f = 'models/{}_epoch{}_nlayers{}_input{}_output{}_hs{}_trainL{:.2f}_valL{:.2f}.pt'
+    return f.format(decoder.model, epoch, decoder.n_layers, decoder.input_size,
+                    decoder.output_size, decoder.hidden_size, train_loss, val_loss)
 
 def main():
 
@@ -69,7 +62,6 @@ def main():
     argparser.add_argument('--num_workers', type=int, default=8)
     argparser.add_argument('--cuda', action='store_true')
     argparser.add_argument('--cpu', action='store_true')
-    argparser.add_argument('--model_file', type=str)
     args = argparser.parse_args()
 
     # Initialize models and start training
@@ -102,15 +94,20 @@ def main():
 
     try:
         prev_valid_loss = sys.maxsize
+        old_filename = None
 
-        print('Training for {} epochs...'.format(args.n_epochs))
+        print('Training for maximum {} epochs...'.format(args.n_epochs))
         for epoch in range(1, args.n_epochs + 1):
-            train_loss = 0
-            for s in train_dataloader:
+
+
+            train_loss, num_samples = 0, 0
+            for s in tqdm(train_dataloader):
                 input_, target = prep_data(s['input'], s['target'], args.cuda)
                 train_loss += train(decoder, optimizer, criterion, input_,
                                     target, args.batch_size, args.chunk_len,
                                     args.cuda)
+                num_samples += 1
+            train_loss /= num_samples
 
             valid_loss, num_samples = 0, 0
             for s in valid_dataloader:
@@ -118,28 +115,34 @@ def main():
                 valid_loss += evaluate(decoder, criterion, input_, target,
                                        args.batch_size, args.chunk_len, args.cuda)
                 num_samples += 1
-            bpc = valid_loss / num_samples # bits per character
+            valid_loss /= num_samples
 
             elapsed = time_since(start)
             pcnt = epoch / args.n_epochs * 100
-            log = ('{} elapsed - epoch #{} ({:.1f}%) - training loss {:.2f} '
-                   '- validation loss {:.2f} - BPC {:.2f}')
-            print(log.format(elapsed, epoch, pcnt, train_loss, valid_loss, bpc))
+            log = ('{} elapsed - epoch #{} ({:.1f}%) - training loss (BPC) {:.2f} '
+                   '- validation loss (BPC) {:.2f}')
+            print(log.format(elapsed, epoch, pcnt, train_loss, valid_loss))
 
             if valid_loss > prev_valid_loss:
                 print('No longer learning, just overfitting, stopping here.')
                 break
+            else:
+                filename = model_file_name(decoder, epoch, train_loss, valid_loss)
+                torch.save(decoder, filename)
+                print('Saved as {}'.format(filename))
+                if old_filename:
+                    os.remove(old_filename)
+                old_filename = filename
 
             prev_valid_loss = valid_loss
-
-        print("Saving...")
-        save(decoder, args.model_file, args.train_set, epoch, train_loss, valid_loss)
 
     except KeyboardInterrupt:
         print("Saving before quit...")
         try: valid_loss
         except: valid_loss = 'no_val'
-        save(decoder, args.model_file, args.train_set, epoch, train_loss, valid_loss)
+        filename = model_file_name(decoder, epoch, train_loss, valid_loss)
+        torch.save(decoder, filename)
+        print('Saved as {}'.format(filename))
 
 if __name__ == '__main__':
     main()
