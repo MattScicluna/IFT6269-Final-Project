@@ -37,14 +37,15 @@ def train(decoder, optimizer, criterion, inp, target, batch_size, chunk_len, cud
 
     return loss.data[0] / chunk_len
 
-def save(decoder, model_file, filename, epoch):
+def save(decoder, model_file, filename, epoch, train_loss, valid_loss):
     if model_file:
         filename = model_file
     else:
         #filename = os.path.splitext(os.path.basename(filename))[0] 
         filename = decoder.model + '_epoch' + str(epoch) + '_nlayers' + str(decoder.n_layers) \
                 + '_input' + str(decoder.input_size) + '_output' + str(decoder.output_size) \
-                + '_hs' + str(decoder.hidden_size) + '.pt'
+                + '_hs' + str(decoder.hidden_size) + '_trainL' + str(train_loss) \
+                + '_valL' + str(valid_loss) + '.pt'
     torch.save(decoder, filename)
     print('Saved as {}'.format(filename))
 
@@ -129,11 +130,13 @@ def main():
             prev_valid_loss = valid_loss
 
         print("Saving...")
-        save(decoder, args.model_file, args.train_set, epoch)
+        save(decoder, args.model_file, args.train_set, epoch, train_loss, valid_loss)
 
     except KeyboardInterrupt:
         print("Saving before quit...")
-        save(decoder, args.model_file, args.train_set, epoch)
+        try: valid_loss
+        except: valid_loss = 'no_val'
+        save(decoder, args.model_file, args.train_set, epoch, train_loss, valid_loss)
 
 if __name__ == '__main__':
     main()
