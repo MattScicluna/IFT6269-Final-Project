@@ -1,5 +1,10 @@
 # IFT6269-Final-Project
 
+To train: 
+```
+> python char-rnn.pytorch/train.py --train_set data/train.txt --valid_set data/valid.txt --model lstm --cuda
+```
+
 To generate text (use `—-cpu` to use the GPU-trained model on a CPU):
 
 ```
