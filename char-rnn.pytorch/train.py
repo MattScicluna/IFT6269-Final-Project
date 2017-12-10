@@ -18,6 +18,7 @@ from dataset import WordDataset, n_characters, time_since
 from generate import generate
 from helpers import read_file
 from helpers import char_tensor
+from helpers import prep_data
 from model import CharRNN
 
 # Parse command line arguments
@@ -37,14 +38,6 @@ argparser.add_argument('--cpu', action='store_true')
 argparser.add_argument('--full_dataset', action='store_true')
 argparser.add_argument('--model_file', type=str)
 args = argparser.parse_args()
-
-def prep_data(inp, target):
-    inp = Variable(inp)
-    target = Variable(target)
-    if args.cuda:
-        inp = inp.cuda()
-        target = target.cuda()
-    return inp, target
 
 def random_training_set(chunk_len, batch_size):
     inp = torch.LongTensor(batch_size, chunk_len)
@@ -118,7 +111,7 @@ try:
         if args.full_dataset:
             loss = 0
             for sample in dataloader:
-                loss += train(*prep_data(sample['input'], sample['target']))
+                loss += train(*prep_data(sample['input'], sample['target'], args.cuda))
                 loss_avg += loss
         else:
             loss = train(*random_training_set(args.chunk_len, args.batch_size))
