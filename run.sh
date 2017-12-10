@@ -24,11 +24,11 @@ else
 fi
 
 if [ "$2" == "CUDA" ]; then
-    CUDAFLAG="--cuda"
+    CHIPFLAG="--cuda"
 else
-    CUDAFLAG=""
+    CHIPFLAG="--cpu"
 fi
 
-python char-rnn.pytorch/train.py $DATASET $CUDAFLAG --model_file $MODEL
-python char-rnn.pytorch/generate.py $MODEL -t 0.5 -l 200 --prime_str $SEED $CUDAFLAG
+python char-rnn.pytorch/train.py $DATASET $CHIPFLAG --model_file $MODEL
+python char-rnn.pytorch/generate.py $MODEL -t 0.5 -l 200 --prime_str $SEED $CHIPFLAG
 
