@@ -45,7 +45,6 @@ def save(decoder, model_file, filename, epoch, train_loss, valid_loss):
     if model_file:
         filename = model_file
     else:
-        #filename = os.path.splitext(os.path.basename(filename))[0] 
         filename = decoder.model + '_epoch' + str(epoch) + '_nlayers' + str(decoder.n_layers) \
                 + '_input' + str(decoder.input_size) + '_output' + str(decoder.output_size) \
                 + '_hs' + str(decoder.hidden_size) + '_trainL' + str(train_loss)  \
