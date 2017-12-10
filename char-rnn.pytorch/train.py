@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 # local imports
 from dataset import WordDataset, n_characters, time_since
@@ -106,7 +107,7 @@ def main():
         print('Training for {} epochs...'.format(args.n_epochs))
         for epoch in range(1, args.n_epochs + 1):
             train_loss = 0
-            for s in train_dataloader:
+            for s in tqdm(train_dataloader):
                 input_, target = prep_data(s['input'], s['target'], args.cuda)
                 train_loss += train(decoder, optimizer, criterion, input_,
                                     target, args.batch_size, args.chunk_len,
