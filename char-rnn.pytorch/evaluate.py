@@ -31,7 +31,7 @@ def main():
     	decoder = torch.load(args.model_file)
 
     raw_data = unidecode.unidecode(open(args.filename).read())
-    input_ = Variable(char_tensor(raw_data)[:100])
+    input_ = Variable(char_tensor(raw_data)[:10000]) # TODO - stop truncating here
 
     loss, perplexity = evaluate(decoder, input_)
     print('Loss: {:.2f}, Perplexity: {:.2f}'.format(loss, perplexity))
