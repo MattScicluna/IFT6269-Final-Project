@@ -105,12 +105,16 @@ def main():
 
         print('Training for {} epochs...'.format(args.n_epochs))
         for epoch in range(1, args.n_epochs + 1):
-            train_loss = 0
+
+
+            train_loss, num_samples = 0, 0
             for s in tqdm(train_dataloader):
                 input_, target = prep_data(s['input'], s['target'], args.cuda)
                 train_loss += train(decoder, optimizer, criterion, input_,
                                     target, args.batch_size, args.chunk_len,
                                     args.cuda)
+                num_samples += 1
+            train_loss /= num_samples
 
             valid_loss, num_samples = 0, 0
             for s in valid_dataloader:
@@ -118,13 +122,13 @@ def main():
                 valid_loss += evaluate(decoder, criterion, input_, target,
                                        args.batch_size, args.chunk_len, args.cuda)
                 num_samples += 1
-            bpc = valid_loss / num_samples # bits per character
+            valid_loss /= num_samples
 
             elapsed = time_since(start)
             pcnt = epoch / args.n_epochs * 100
-            log = ('{} elapsed - epoch #{} ({:.1f}%) - training loss {:.2f} '
-                   '- validation loss {:.2f} - BPC {:.2f}')
-            print(log.format(elapsed, epoch, pcnt, train_loss, valid_loss, bpc))
+            log = ('{} elapsed - epoch #{} ({:.1f}%) - training loss (BPC) {:.2f} '
+                   '- validation loss (BPC) {:.2f}')
+            print(log.format(elapsed, epoch, pcnt, train_loss, valid_loss))
 
             if valid_loss > prev_valid_loss:
                 print('No longer learning, just overfitting, stopping here.')
