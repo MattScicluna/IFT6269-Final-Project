@@ -19,11 +19,11 @@ class CharRNN(nn.Module):
 		elif self.model == "lstm":
 			self.rnn = nn.LSTM(hidden_size, hidden_size, n_layers)
 
-			for name, param in self.rnn.named_parameters():
-				if 'bias' in name:
-					 nn.init.constant(param, 0.0)
-				elif 'weight' in name:
-					nn.init.xavier_normal(param)
+		for name, param in self.rnn.named_parameters():
+			if 'bias' in name:
+				nn.init.constant(param, 0.0)
+			elif 'weight' in name:
+				nn.init.xavier_normal(param)
 		self.decoder = nn.Linear(hidden_size, output_size)
 
 	def forward(self, input, hidden):
