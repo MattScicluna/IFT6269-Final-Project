@@ -53,6 +53,7 @@ def main():
     argparser.add_argument('--train_set', type=str, required=True)
     argparser.add_argument('--valid_set', type=str, required=True)
     argparser.add_argument('--model', type=str, default="gru")
+    argparser.add_argument('--model_file', type=str, default='None')
     argparser.add_argument('--n_epochs', type=int, default=30)
     argparser.add_argument('--hidden_size', type=int, default=200)
     argparser.add_argument('--n_layers', type=int, default=3)
@@ -65,14 +66,34 @@ def main():
     args = argparser.parse_args()
 
     # Initialize models and start training
+    
+    if args.model_file == 'None':
+        decoder = CharRNN(
+            n_characters,
+            args.hidden_size,
+            n_characters,
+            model=args.model,
+            n_layers=args.n_layers,
+        )
+        epoch_from = 1
+        prev_valid_loss = sys.maxsize
+        old_filename = None
+    else:
+        if args.cpu:
+            decoder = torch.load(args.model_file, map_location=lambda storage,
+                                                                      loc: storage)
+        else:
+            decoder = torch.load(args.model_file)
+        info = args.model_file.split('_')
+        args.model = info[0]
+        epoch_from = int(info[1][5:]) + 1
+        args.n_layers = int(info[2][7:])
+        args.hidden_size = int(info[5][2:])
+        prev_valid_loss = float(info[7][4:-3])
+        old_filename = args.model_file
 
-    decoder = CharRNN(
-        n_characters,
-        args.hidden_size,
-        n_characters,
-        model=args.model,
-        n_layers=args.n_layers,
-    )
+        print("successfully loaded model! Continuing from epoch {0} with valid loss {1}"
+              .format(epoch_from, prev_valid_loss))
 
     optimizer = torch.optim.Adam(decoder.parameters(), lr=args.learning_rate)
     criterion = nn.CrossEntropyLoss()
@@ -93,11 +114,9 @@ def main():
                                   drop_last=True)
 
     try:
-        prev_valid_loss = sys.maxsize
-        old_filename = None
 
         print('Training for maximum {} epochs...'.format(args.n_epochs))
-        for epoch in range(1, args.n_epochs + 1):
+        for epoch in range(epoch_from, args.n_epochs + 1):
 
 
             train_loss, num_samples = 0, 0
