@@ -13,4 +13,8 @@ char-rnn.pytorch/.idea
 
 char-rnn.pytorch/__pycache__
 
+/data/wiki_train.txt
 
+/data/wiki_valid.txt
+
+/data/wiki_test.txt
