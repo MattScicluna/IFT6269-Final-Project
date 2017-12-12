@@ -86,7 +86,7 @@ def main():
             decoder = torch.load(args.model_file)
         info = args.model_file.split('_')
         args.model = info[0]
-        epoch_from = int(info[1][5:])
+        epoch_from = int(info[1][5:]) + 1
         args.n_layers = int(info[2][7:])
         args.hidden_size = int(info[5][2:])
         prev_valid_loss = float(info[7][4:-3])
@@ -95,8 +95,6 @@ def main():
         print("successfully loaded model! Continuing from epoch {0} with valid loss {1}"
               .format(epoch_from, prev_valid_loss))
 
-
-    #  TODO: load model specifications with model
     optimizer = torch.optim.Adam(decoder.parameters(), lr=args.learning_rate)
     criterion = nn.CrossEntropyLoss()
 
