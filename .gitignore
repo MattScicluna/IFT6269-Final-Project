@@ -9,3 +9,8 @@
 
 models/*.pt
 
+char-rnn.pytorch/.idea
+
+char-rnn.pytorch/__pycache__
+
+
